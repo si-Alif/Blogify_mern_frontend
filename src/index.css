@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.scroll {
+  scrollbar-width: none; /* Firefox */
+  scrollbar-color: #888 #f1f1f1; /* Firefox */
+  overflow-y: scroll; /* Add vertical scroll */
+  scrollbar-track-color: aqua;
+ 
+}
+
+
