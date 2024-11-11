@@ -20,10 +20,11 @@ const MyEditor = forwardRef(({ onChange , value }, ref) => {
 
   return (
     <div>
+      
       <Editor
       
         ref={ref}
-        apiKey="4u9b39hszef9wrd68spzj4xh8626ss121neysc3hop7pt9b1"
+        apiKey="3sulorgt4ga554wsy7u7afc1g705ugnej9fvvvm0jkjt3sro"
         value={content}
         onEditorChange={handleEditorChange}
         

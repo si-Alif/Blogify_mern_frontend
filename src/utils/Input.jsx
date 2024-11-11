@@ -33,7 +33,7 @@ function InputWithIcon(
         }}
         inputProps={{
           style: {
-            color: "white",
+            color: "gray",
             
             fontSize: "18px",
             borderRadius:"10px",

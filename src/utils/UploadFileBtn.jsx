@@ -23,17 +23,19 @@ function InputFileUpload({ onChange , value }, ref) {
     if(preview){
       setPreview("")
       const file = e.target.files[0];
+      console.log(e.target)
       if (file) {
         const previewURL = URL.createObjectURL(file);
         setPreview(previewURL);
-        onChange && onChange(e); // Notify parent of file change
+        onChange && onChange(file); // Notify parent of file change
       }
     }else{
       const file = e.target.files[0];
+      
       if (file) {
         const previewURL = URL.createObjectURL(file);
         setPreview(previewURL);
-        onChange && onChange(e); // Notify parent of file change
+        onChange && onChange(file); // Notify parent of file change
       }
     }
   }
@@ -59,6 +61,7 @@ function InputFileUpload({ onChange , value }, ref) {
         component="label"
         variant="contained"
         startIcon={<CloudUploadIcon />}
+        
       >
         Upload file
         <VisuallyHiddenInput
