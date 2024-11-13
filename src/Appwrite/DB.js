@@ -44,7 +44,7 @@ export class DataBase {
 
   }
 
-  async getAllposts(query) {
+  async getAllposts(query=[]) {
 
     try {
       const response = await this.databases.listDocuments(

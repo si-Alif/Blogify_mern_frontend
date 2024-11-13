@@ -50,7 +50,7 @@ function Header() {
 
   return (
     <>
-     <nav className='bg-blue-100 flex flex-row justify-evenly dark:bg-slate-600 py-5 w-screen overflow-hidden flex-wrap rounded-t-xl '>
+     <nav className='bg-blue-100 flex flex-row justify-evenly dark:bg-slate-600 py-5 w-screen overflow-hidden flex-wrap rounded-t-xl sticky top-0'>
         <section className='w-1/6 flex flex-row justify-between items-center'>
          <Link to='/'>
            <Logo />

@@ -8,80 +8,88 @@ class AuthService {
 
   constructor() {
     this.client
-    .setEndpoint(conf.endpointURL)
-    .setProject(conf.projectId);
+      .setEndpoint(conf.endpointURL)
+      .setProject(conf.projectId);
     this.account = new Account(this.client);
   }
 
   async signup({ email, password, fullName }, navigate, dispatch) {
     try {
-      const user = await this.account.create(
+      // Create user
+      const userInfo = await this.account.create(
         ID.unique(),
         email,
         password,
         fullName
       );
-
-      if (user) {
-        this.login({ email, password }, navigate, dispatch);
+  
+      // Directly attempt login after successful user creation
+      if (userInfo) {
+        await this.login({ email, password }, navigate, dispatch, false); // Pass `false` to skip session check
+        return userInfo;
       }
     } catch (error) {
       throw new Error(
-        `Failed to signup user with email in the appwrite server : ${email}, error: ${error.message}`
+        `Failed to sign up user with email in the Appwrite server: ${email}, error: ${error.message}`
       );
     }
   }
-
-  async getCurrSession() {
+  
+  async getCurrUserData() {
     try {
-      const session = await this.account.getSession("current");
-      if (session) {
-        console.log(session);
-        return session;
-      }
+      // Fetch current session if the user is logged in
+      const session = await this.account.get();
+      return session;
     } catch (error) {
+      if (error.code === 404) {
+        return null;
+      }
       throw new Error(
-        `Failed to get session from the appwrite server: error: ${error.message}`
+        `Failed to get session from the Appwrite server: error: ${error.message}`
       );
     }
   }
-
-  async login({ email, password }, navigate, dispatch) {
-    const session = await this.getCurrSession();
-    if (session) {
-      navigate("/");
-    } else {
-      try {
-        const userInfo = await this.account.createEmailPasswordSession(
-          email,
-          password
-        );
-        if (userInfo) {
-          dispatch(authLogin(userInfo));
+  
+  async login({ email, password }, navigate, dispatch, checkSession = true) {
+    try {
+      // Check if there's already an active session only if checkSession is true
+      if (checkSession) {
+        const session = await this.getCurrUserData();
+        if (session) {
+          dispatch(authLogin(session));
           navigate("/");
-          return userInfo;
+          return session;
         }
-      } catch (error) {
-        throw new Error(
-          `Failed to login user with email in the appwrite server: ${email}, error: ${error.message}`
-        );
       }
+  
+      // If no session exists, or if skip session check, create a new one
+      const newSession = await this.account.createEmailPasswordSession(email, password);
+      if (newSession) {
+        dispatch(authLogin(newSession));
+        navigate("/");
+        return newSession;
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to login user with email in the Appwrite server: ${email}, error: ${error.message}`
+      );
     }
   }
-
-  async creatorEmailVerification() {
+  
+  
+  async createEmailVerification() {
     try {
       return await this.account.createVerification(
         "https://localhost:5173/verify"
       );
     } catch (error) {
       throw new Error(
-        `Failed to verify email in the appwrite server :  error: ${error.message}`
+        `Failed to verify email in the appwrite server : error: ${error.message}`
       );
     }
   }
 
-  async ctreateCreatorAccount() {
+  async createCreatorAccount() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const secret = urlParams.get("secret");
@@ -89,7 +97,7 @@ class AuthService {
 
       if (secret && userId) {
         return await this.account.updateVerification(userId, secret);
-      } else if (!userId || !secret) {
+      } else {
         throw new Error("Missing userId or secret in URL parameters.");
       }
     } catch (error) {
@@ -103,7 +111,7 @@ class AuthService {
     try {
       return await this.account.createRecovery(
         email,
-        "https://localhost:5173/reset-password" //to be updated
+        "https://localhost:5173/reset-password"
       );
     } catch (error) {
       throw new Error(
@@ -113,6 +121,9 @@ class AuthService {
   }
 
   async updatePassword({ password, confirmPassword }) {
+    if (password !== confirmPassword) {
+      throw new Error("Passwords do not match.");
+    }
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const secret = urlParams.get("secret");
@@ -125,8 +136,8 @@ class AuthService {
           password,
           confirmPassword
         );
-      } else if (!userId || !secret) {
-        throw new Error("Missing userId or secret in URL parameters .");
+      } else {
+        throw new Error("Missing userId or secret in URL parameters.");
       }
     } catch (error) {
       throw new Error(
@@ -135,44 +146,14 @@ class AuthService {
     }
   }
 
-  async getCurrentUser({ userId }) {
+    async logout() {
     try {
-      const user = await this.account.get(userId);
-      console.log(user);
-      if (user) return user;
+      await this.account.deleteSessions("current");
     } catch (error) {
       throw new Error(
-        `Failed to get user in the appwrite server, error: ${error.message}`
+        `Failed to logout user in the appwrite server, error: ${error.message}`
       );
     }
-  }
-
-  async deactivateUser() {
-    try {
-      return await this.account.updateStatus();
-    } catch (error) {
-      throw new Error(
-        `Failed to deactivate user in the appwrite server, error: ${error.message}`
-      );
-    }
-  }
-
-  async deleteUser({ userId }) {
-    try {
-      await this.account.delete(userId);
-    } catch (error) {
-      throw new Error(
-        `Failed to delete user in the appwrite server, error: ${error.message}`
-      );
-    }
-  }
-
-  async getCurrentUserSession() {
-    return await this.account.getSession("current");
-  }
-
-  async logout() {
-    await this.account.deleteSessions("current");
   }
 }
 

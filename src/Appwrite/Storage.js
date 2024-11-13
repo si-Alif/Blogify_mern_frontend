@@ -71,7 +71,7 @@ export class StorageServ {
     }
   }
 
-  async filePreview({ fileId }) {
+  async filePreview( fileId ) {
     try {
       return await this.storage.getFilePreview(conf.bucketId, fileId);
     } catch (error) {
