@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import databaseService from '../Appwrite/DB';
 import PreviewCard from './PreviewCard';
 import { useSelector } from 'react-redux';
-import { FixedSizeList as List } from 'react-window'; // for virtualization
 
 // Custom hook to handle posts fetching and caching
 function usePosts() {
@@ -10,28 +9,32 @@ function usePosts() {
   const [loading, setLoading] = useState(true);
 
   const fetchPosts = useCallback(async () => {
+    setLoading(true);
     try {
-      const cachedPosts = JSON.parse(localStorage.getItem('posts'));
-      if (cachedPosts) {
-        setPosts(cachedPosts);
-        setLoading(false);
-      } else {
-        const postsData = await databaseService.getAllposts();
-        setPosts(postsData || []);
-        localStorage.setItem('posts', JSON.stringify(postsData || [])); // Cache in localStorage
-      }
+      const postsData = await databaseService.getAllposts();
+      setPosts(postsData || []);
+      localStorage.setItem('posts', JSON.stringify(postsData || [])); // Cache in localStorage
     } catch (error) {
-      console.error(`Could not retrieve all posts in Home: ${error}`);
+      console.error(`Could not retrieve all posts: ${error}`);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Load cached posts on the initial render and call fetchPosts for the latest data
   useEffect(() => {
-    fetchPosts();
+    const cachedPosts = JSON.parse(localStorage.getItem('posts'));
+    if (cachedPosts) {
+      setPosts(cachedPosts);
+      setLoading(false);
+    }
+    fetchPosts(); // Fetch latest posts and update state
   }, [fetchPosts]);
 
-  return { posts, loading };
+  // Memoize the posts data to avoid re-computing if posts haven't changed
+  const memoizedPosts = useMemo(() => posts, [posts]);
+
+  return { posts: memoizedPosts, loading };
 }
 
 function Home() {
@@ -70,24 +73,21 @@ function Home() {
     }
 
     return (
-      <List
-        height={600}
-        itemCount={posts.length}
-        itemSize={200}
-        width={'100%'}
-      >
-        {({ index, style }) => (
-          <div style={style}>
-            <PreviewCard {...posts[index]} />
+      <div className="grid grid-cols-4 gap-5">
+        {posts.map((post, index) => (
+          <div key={post.$id} className="max-w-[22vw]">
+            <PreviewCard {...post} />
           </div>
-        )}
-      </List>
+        ))}
+      </div>
     );
   };
 
   return (
-    <main className="w-screen h-screen overflow-x-hidden bg-blue-600 dark:bg-gray-700 flex flex-col justify-start items-baseline">
-      {renderContent()}
+    <main className="w-screen overflow-x-hidden overflow-y-scroll scroll bg-blue-600 dark:bg-gray-700 flex justify-center min-h-screen">
+      <div className=" w-full mt-10 p-4 flex justify-evenly ">
+        {renderContent()}
+      </div>
     </main>
   );
 }

@@ -93,7 +93,7 @@ export class DataBase {
         conf.collectionId,
         postId,
         {
-          data
+          ...data
         }
       );
       if (response) {

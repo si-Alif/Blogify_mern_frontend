@@ -51,15 +51,23 @@ export class StorageServ {
     }
   }
 
-  async deleteFile({ fileId }) {
+  async deleteFile(fileId) {
     try {
-      return await this.storage.deleteFile(conf.bucketId, fileId);
+      const fileExists = await this.storage.getFile(conf.bucketId, fileId);
+      if (!fileExists) {
+        console.warn(`File with ID ${fileId} does not exist on the server.`);
+        return;
+      }
+      return this.storage.deleteFile(conf.bucketId, fileId);
     } catch (error) {
-      throw new Error(
-        `Failed to delete image with id ${fileId} from the appwrite server : ${error.message}`
-      );
+      if (error.code === 404) {
+        console.warn(`File with ID ${fileId} not found on server.`);
+      } else {
+        throw new Error(`Failed to delete image with id ${fileId} from the Appwrite server: ${error.message}`);
+      }
     }
   }
+
 
   async downloadFile({ fileId }) {
     try {

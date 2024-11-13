@@ -1,11 +1,5 @@
 import { useForm, Controller } from "react-hook-form";
-import {
-  Tags,
-  Input,
-  UploadFileBtn,
-  PostStatus,
-  Button,
-} from "../utils/utilsIndex.js";
+import { Tags, Input, UploadFileBtn, PostStatus, Button } from "../utils/utilsIndex.js";
 import RTE from "./RTE.jsx";
 import databaseService from "../Appwrite/DB.js";
 import storageService from "../Appwrite/Storage.js";
@@ -14,16 +8,15 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { Query } from "appwrite";
 import { useNavigate } from "react-router-dom";
-
-  
+import authService from "../Appwrite/auth.js";
 
 const PostForm = () => {
-
-  
   const location = useLocation();
-  const post = location.state?.post;
+  const post = location.state
+  console.log(post)
   const navigate = useNavigate();
   const userData = useSelector((state) => state.auth.userInfo);
+  console.log(userData);
 
   const { control, handleSubmit } = useForm({
     defaultValues: {
@@ -35,46 +28,53 @@ const PostForm = () => {
     },
   });
 
-
   const onSubmit = async (data) => {
-    console.log(userData)
-    console.log(data)
-    if (post && post.tags.length > 0) {
-      const file = data.featuredImage instanceof File ? data.featuredImage : undefined;
-      if (file) {
+    const user = await authService.getCurrUserData("current");
+
+    if (post && post.tags?.length > 0) {
+      const file = post.featuredImage ? post.featuredImage : null
+      console.log(file)
+      if (file != data.featuredImage) {
         try {
-          await storageService.deleteFile(post.featuredImage);
+          if(file){
 
-          const newFileId = await storageService.uploadFile(file);
+            await storageService.deleteFile(file);
+          }
 
-          data.featuredImage = newFileId.$id;
-
-          await databaseService.updatePost({
+          const newFileId = await storageService.uploadFile(data.featuredImage);
+          const fileId = newFileId.$id
+          data.featuredImage = fileId;
+          const dbPost = await databaseService.updatePost(post.$id,{
             ...data,
+            userId: userData.userId,
+            createdBy: user.name,
+            
           });
+          if (dbPost) {
+            navigate(`/post/${dbPost.$id}`);
+          }
         } catch (error) {
           throw new Error(
-            `Failed to delete file with id ${post.featuredImage} from the appwrite server : ${error.message}`
+            `Failed to delete file with id ${post.featuredImage} from the Appwrite server: ${error.message}`
           );
         }
       }
     } else {
-      const file = data.Image
-        ? await storageService.uploadFile(data.Image)
-        : null && console.log(`Error uploading ${data.Image}`);
+      const file = data.featuredImage
+        ? await storageService.uploadFile(data.featuredImage)
+        : null;
       if (file) {
-        console.log(`The uploaded images reference about the returned object ${JSON.stringify(file)}`);
         const fileId = file.$id;
         data.featuredImage = fileId;
         const dbPost = await databaseService.createPost({
           ...data,
-          userId: userData.userId
+          userId: userData.userId,
+          createdBy: user.name,
         });
 
         if (dbPost) {
-            navigate(`/post/${dbPost.$id}`);
+          navigate(`/post/${dbPost.$id}`);
         }
-        
       }
     }
   };
@@ -92,13 +92,11 @@ const PostForm = () => {
             render={({ field }) => (
               <Input
                 {...field}
-                className={"w-[55vw] p-7 bg-red-200 rounded-xl"}
-                label={"Enter Post Title"}
-                type={"text"}
-                value={field.value || ""}
-                required={true}
-                icon={true}
-                
+                className="w-[55vw] p-7 bg-red-200 rounded-xl"
+                label="Enter Post Title"
+                type="text"
+                required
+                icon
               />
             )}
           />
@@ -109,14 +107,7 @@ const PostForm = () => {
               render={({ field }) => (
                 <Tags
                   {...field}
-                  vals={[
-                    "React",
-                    "JavaScript",
-                    "CSS",
-                    "HTML",
-                    "Node.js",
-                    "MongoDB",
-                  ]}
+                  vals={["React", "JavaScript", "CSS", "HTML", "Node.js", "MongoDB"]}
                   value={field.value || []}
                 />
               )}
@@ -139,10 +130,10 @@ const PostForm = () => {
             Enter Blog's Featured Image Here
           </label>
           <Controller
-            name="Image"
+            name="featuredImage"
             control={control}
             render={({ field }) => (
-              <UploadFileBtn {...field} onChange={(file)=>field.onChange(file)} />
+              <UploadFileBtn {...field} value={field.value || ""}  onChange={(file) => field.onChange(file)} />
             )}
           />
         </aside>
@@ -160,7 +151,7 @@ const PostForm = () => {
           render={({ field }) => <RTE {...field} value={field.value || ""} />}
         />
       </section>
-      <div className="">
+      <div>
         <Button type="submit">Submit</Button>
       </div>
     </form>

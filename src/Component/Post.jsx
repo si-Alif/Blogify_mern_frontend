@@ -4,15 +4,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import databaseService from "../Appwrite/DB";
 import storageService from "../Appwrite/Storage";
 import HTMLReactParser from "html-react-parser";
+import { Link } from "react-router-dom";
 
 function Post() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userData = useSelector((state) => state.auth.userInfo);
+  console.log(userData);
   const { postId } = useParams();
   const [post, setPost] = useState(null);
   const [img, setImg] = useState("");
 
+  console.log(post);
   useEffect(() => {
     let isMounted = true; // Track component mount status
 
@@ -40,7 +43,6 @@ function Post() {
     };
   }, [postId]);
 
-  
   const handleDelete = async () => {
     try {
       await databaseService.deletePost(postId);
@@ -79,16 +81,13 @@ function Post() {
               }).format(new Date(post.$createdAt))}
             </p>
           </div>
-          {userData?.id === post.createdBy && (
+          {userData?.userId === post?.userId && (
             <div className="flex space-x-4 mt-4">
-              <Link to={`/post/edit/${post.$id}`} state={post} >
-              <button
-               
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                Edit
-              </button>
-                </Link>
+              <Link to={`/post/edit/${post.$id}`} state={post}>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                  Edit
+                </button>
+              </Link>
               <button
                 onClick={handleDelete}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"

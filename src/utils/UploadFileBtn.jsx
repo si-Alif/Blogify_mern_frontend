@@ -2,6 +2,7 @@ import * as React from 'react';
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import storageService from '../Appwrite/Storage';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -17,20 +18,25 @@ const VisuallyHiddenInput = styled('input')({
 
 function InputFileUpload({ onChange , value }, ref) {
   const [preview, setPreview] = React.useState(value || "");
+  console.log(preview)
+
+  React.useEffect(()=>{
+    const img = async()=>{
+      if(preview){
+        const file =await storageService.filePreview(preview)
+        setPreview("")
+        if (file) {
+          console.log(file)
+          setPreview(file)
+        }
+      }
+    }
+    img()
+  },[setPreview])
 
   const handleFileChange = (e) => {
 
-    if(preview){
-      setPreview("")
-      const file = e.target.files[0];
-      console.log(e.target)
-      if (file) {
-        const previewURL = URL.createObjectURL(file);
-        setPreview(previewURL);
-        onChange && onChange(file); // Notify parent of file change
-      }
-    }else{
-      const file = e.target.files[0];
+    const file = e.target.files[0];
       
       if (file) {
         const previewURL = URL.createObjectURL(file);
@@ -38,8 +44,6 @@ function InputFileUpload({ onChange , value }, ref) {
         onChange && onChange(file); // Notify parent of file change
       }
     }
-  }
-
   
 
   return (
