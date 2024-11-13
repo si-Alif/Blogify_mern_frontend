@@ -2,24 +2,26 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   isAuthenticated: false,
-  userInfo: null, 
+  session: null, // Stores the session data (e.g., session ID, expiration time)
+  userInfo: null, // Stores user information (e.g., user ID, name, email)
 };
 
-const auth = createSlice({
+const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    login: (state, action) => {
+    login: (state, action) => {  // Renamed to match auth.js
       state.isAuthenticated = true;
-      state.userInfo = action.payload.userInfo; 
+      state.session = action.payload.session; // Save session details
+      state.userInfo = action.payload.userInfo; // Save user details
     },
     logout: (state) => {
       state.isAuthenticated = false;
-      state.userInfo = null; 
+      state.session = null;
+      state.userInfo = null;
     },
   },
 });
 
-export const { login, logout } = auth.actions;
-
-export default auth.reducer;
+export const {login, logout } = authSlice.actions;  // Export renamed action
+export default authSlice.reducer;

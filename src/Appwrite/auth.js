@@ -15,66 +15,79 @@ class AuthService {
 
   async signup({ email, password, fullName }, navigate, dispatch) {
     try {
-      // Create user
-      const userInfo = await this.account.create(
-        ID.unique(),
-        email,
-        password,
-        fullName
-      );
-  
-      // Directly attempt login after successful user creation
-      if (userInfo) {
-        await this.login({ email, password }, navigate, dispatch, false); // Pass `false` to skip session check
-        return userInfo;
-      }
-    } catch (error) {
-      throw new Error(
-        `Failed to sign up user with email in the Appwrite server: ${email}, error: ${error.message}`
-      );
-    }
-  }
-  
-  async getCurrUserData() {
-    try {
-      // Fetch current session if the user is logged in
-      const session = await this.account.get();
-      return session;
-    } catch (error) {
-      if (error.code === 404) {
-        return null;
-      }
-      throw new Error(
-        `Failed to get session from the Appwrite server: error: ${error.message}`
-      );
-    }
-  }
-  
-  async login({ email, password }, navigate, dispatch, checkSession = true) {
-    try {
-      // Check if there's already an active session only if checkSession is true
-      if (checkSession) {
-        const session = await this.getCurrUserData();
-        if (session) {
-          dispatch(authLogin(session));
-          navigate("/");
-          return session;
+        // Create a new user
+        const userInfo = await this.account.create(
+            ID.unique(),
+            email,
+            password,
+            fullName
+        );
+
+        if (userInfo) {
+            // Call login to create session and update Redux state
+            await this.login({ email, password }, navigate, dispatch, false); // Skip session check
+            return userInfo;
         }
-      }
-  
-      // If no session exists, or if skip session check, create a new one
-      const newSession = await this.account.createEmailPasswordSession(email, password);
-      if (newSession) {
-        dispatch(authLogin(newSession));
-        navigate("/");
-        return newSession;
-      }
     } catch (error) {
-      throw new Error(
-        `Failed to login user with email in the Appwrite server: ${email}, error: ${error.message}`
-      );
+        throw new Error(
+            `Failed to sign up user with email ${email}: ${error.message}`
+        );
     }
+}
+
+
+async getCurrUserData() {
+    try {
+        // Fetch current session if the user is logged in
+        const session = await this.account.get();
+        return session
+    } catch (error) {
+        if (error.code === 404) {
+            return null;
+        }
+        throw new Error(
+            `Failed to get session from the Appwrite server: error: ${error.message}`
+        );
+    }
+}
+
+// New method to delete active sessions
+async deleteAllSessions() {
+  try {
+      await this.account.deleteSessions();
+  } catch (error) {
+      throw new Error(
+          `Failed to delete sessions: ${error.message}`
+      );
   }
+}
+
+
+async login({ email, password }, navigate, checkSession = true) {
+    await this.deleteAllSessions();
+  try {
+      // Delete active sessions to avoid conflicts
+
+      // Create a new session for the user
+      const newSession = await this.account.createEmailPasswordSession(email, password);
+      console.log(newSession) 
+       
+      const userData= await this.getCurrUserData(newSession.$id)
+      
+      if (newSession && userData) {
+          // Dispatch setAuthState to store session and user info in Redux
+          
+
+          navigate("/");
+          return newSession;
+      }
+  } catch (error) {
+      throw new Error(
+          `Failed to login user with email ${email}: ${error.message}`
+      );
+  }
+}
+
   
   
   async createEmailVerification() {
@@ -146,15 +159,21 @@ class AuthService {
     }
   }
 
-    async logout() {
+  async logout(dispatch, navigate) {
     try {
-      await this.account.deleteSessions("current");
+        // Delete all sessions to log the user out
+        await this.deleteAllSessions();
+
+        // Dispatch clearAuthState to reset auth data in Redux
+        dispatch(logout());
+        navigate("/login"); // Redirect to login page after logout
     } catch (error) {
-      throw new Error(
-        `Failed to logout user in the appwrite server, error: ${error.message}`
-      );
+        throw new Error(
+            `Failed to log out user: ${error.message}`
+        );
     }
-  }
+}
+
 }
 
 const authService = new AuthService();

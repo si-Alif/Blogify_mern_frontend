@@ -21,9 +21,7 @@ function SignUp() {
         navigate,
         dispatch
     )
-    console.log(loginSession)
-   console.log(loginSession && userStatus)
-   console.log(userStatus)
+    
   }
 
 
@@ -40,7 +38,7 @@ function SignUp() {
                 className={"w-[25vw] p-7"}
                 label={"Enter your Full Name"}
                 type={"text"}
-                inputStyle={{color: "black"  }}
+                
                 required={true}
                 icon={true}
               />

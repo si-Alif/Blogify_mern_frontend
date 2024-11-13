@@ -41,7 +41,7 @@ export class StorageServ {
       return false
     }
   }
-  async getFeaturedFile({ fileId }) {
+  async getFeaturedFile( fileId ) {
     try {
       return await this.storage.getFile(conf.bucketId, fileId);
     } catch (error) {

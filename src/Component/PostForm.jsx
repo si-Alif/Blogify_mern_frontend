@@ -13,10 +13,17 @@ import { useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { Query } from "appwrite";
+import { useNavigate } from "react-router-dom";
+
+  
 
 const PostForm = () => {
+
+  
   const location = useLocation();
   const post = location.state?.post;
+  const navigate = useNavigate();
+  const userData = useSelector((state) => state.auth.userInfo);
 
   const { control, handleSubmit } = useForm({
     defaultValues: {
@@ -28,9 +35,9 @@ const PostForm = () => {
     },
   });
 
-  const userData = useSelector((state) => state.auth.userinfo);
 
   const onSubmit = async (data) => {
+    console.log(userData)
     console.log(data)
     if (post && post.tags.length > 0) {
       const file = data.featuredImage instanceof File ? data.featuredImage : undefined;
@@ -61,8 +68,12 @@ const PostForm = () => {
         data.featuredImage = fileId;
         const dbPost = await databaseService.createPost({
           ...data,
-          userId: "sample1",
+          userId: userData.userId
         });
+
+        if (dbPost) {
+            navigate(`/post/${dbPost.$id}`);
+        }
         
       }
     }
@@ -81,12 +92,13 @@ const PostForm = () => {
             render={({ field }) => (
               <Input
                 {...field}
-                className={"w-[55vw] p-7"}
+                className={"w-[55vw] p-7 bg-red-200 rounded-xl"}
                 label={"Enter Post Title"}
                 type={"text"}
                 value={field.value || ""}
                 required={true}
                 icon={true}
+                
               />
             )}
           />

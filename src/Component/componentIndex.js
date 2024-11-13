@@ -5,6 +5,8 @@ import Footer from "./Footer.jsx"
 import SignUp from "./SignUp.jsx"
 import Login from "./Login.jsx"
 import Home from "./Home.jsx"
+import Post from "./Post.jsx"
+import Account from "./Account.jsx"
 
 
 export {
@@ -14,6 +16,8 @@ export {
   Footer,
   SignUp,
   Login,
-  Home
+  Home,
+  Post,
+  Account
  
 }

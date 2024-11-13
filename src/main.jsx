@@ -4,8 +4,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
 import App from './App.jsx';
 import { Provider } from 'react-redux';
-import store from './ReduxStore/store.js';
-import { SignUp, PostForm, Home, Login } from "./Component/componentIndex.js";
+import { reduxStore, persistor } from "./ReduxStore/store.js"
+import { SignUp, Post, PostForm, Home, Login, Account } from "./Component/componentIndex.js";
+import { PersistGate } from 'redux-persist/integration/react';
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,23 @@ const router = createBrowserRouter([
         path: '/postform',
         element: <PostForm />,
       },
+      {
+        path: '/post',
+        children: [
+          {
+            path: '/post/:postId',
+            element: <Post />,
+          },
+          {
+            path: '/post/edit/:postId',
+            element: <PostForm />,
+          }
+        ]
+      },
+      {
+        path: '/account',
+        element: <Account />,
+      }
     ],
   },
   {
@@ -34,8 +52,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Provider store={store}>
-      <RouterProvider router={router} />
+    <Provider store={reduxStore}>
+      <PersistGate loading={<div>Loading...</div>} persistor={persistor}> 
+        <RouterProvider router={router} />
+      </PersistGate>
     </Provider>
   </StrictMode>
 );

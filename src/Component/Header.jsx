@@ -23,7 +23,7 @@ function Header() {
       },
       {
         label: 'Addpost',
-        path: '/addpost',
+        path: '/postform',
         active: state
       },
       {

@@ -17,7 +17,7 @@ function InputWithIcon(
     required,
     icon = true,
     inputStyle = {},
-    labelStyle = ""
+    labelStyle = {color:"#4682B4"}
   },
   ref
 ) {

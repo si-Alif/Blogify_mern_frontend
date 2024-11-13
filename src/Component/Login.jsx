@@ -7,6 +7,7 @@ import authService from "../Appwrite/auth.js";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import databaseService from "../Appwrite/DB.js";
+import {login} from "../ReduxStore/auth.js"
 
 function Login() {
   const navigate = useNavigate();
@@ -22,9 +23,18 @@ function Login() {
       navigate,
       dispatch
     );
-    console.log(loginSession);
-    console.log(loginSession && userStatus);
+    console.log(loginSession)
+    if (loginSession) {
+      
+      dispatch(login({userInfo: loginSession }))
+    }else{
+      alert("Invalid Email or Password")
+    }
+   
   };
+
+  const userData = useSelector((state) => state.auth.userInfo);
+  console.log(userData)
 
   return (
     <>
