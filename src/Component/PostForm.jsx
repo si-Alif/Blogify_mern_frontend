@@ -4,9 +4,7 @@ import RTE from "./RTE.jsx";
 import databaseService from "../Appwrite/DB.js";
 import storageService from "../Appwrite/Storage.js";
 import { useLocation } from "react-router-dom";
-import { useState } from "react";
 import { useSelector } from "react-redux";
-import { Query } from "appwrite";
 import { useNavigate } from "react-router-dom";
 import authService from "../Appwrite/auth.js";
 

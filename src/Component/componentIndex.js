@@ -7,6 +7,7 @@ import Login from "./Login.jsx"
 import Home from "./Home.jsx"
 import Post from "./Post.jsx"
 import Account from "./Account.jsx"
+import VerifyPage from "./Verify.jsx"
 
 
 export {
@@ -18,6 +19,7 @@ export {
   Login,
   Home,
   Post,
-  Account
+  Account,
+  VerifyPage
  
 }

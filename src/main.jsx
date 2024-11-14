@@ -5,7 +5,7 @@ import './index.css';
 import App from './App.jsx';
 import { Provider } from 'react-redux';
 import { reduxStore, persistor } from "./ReduxStore/store.js"
-import { SignUp, Post, PostForm, Home, Login, Account } from "./Component/componentIndex.js";
+import { SignUp, Post, PostForm, Home, Login, Account,VerifyPage } from "./Component/componentIndex.js";
 import { PersistGate } from 'redux-persist/integration/react';
 
 const router = createBrowserRouter([
@@ -48,6 +48,10 @@ const router = createBrowserRouter([
     path: '/login',
     element: <Login />,
   },
+  {
+    path: '/verify',
+    element: <VerifyPage />, // Replace with actual Creator component
+  }
 ]);
 
 createRoot(document.getElementById('root')).render(
