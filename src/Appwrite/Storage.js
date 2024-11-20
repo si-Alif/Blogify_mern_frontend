@@ -41,6 +41,23 @@ export class StorageServ {
       return false
     }
   }
+  async uploadProfilePicture(PP){
+    
+    // once we upload the file we will get an json object where we will get an object which later on we will pass it to the          🗿🗿🗿 createpost's userId parameter as a refrence of the uploaded file
+    try {
+      return await this.storage.createFile(
+        conf.PPbucketId,
+        ID.unique(),
+        PP
+
+      )
+    } catch (error) {
+      throw new Error (
+        `Error while uploading a file ::Error:: ${error.message}`
+      )
+      return false
+    }
+  }
   async getFeaturedFile( fileId ) {
     try {
       return await this.storage.getFile(conf.bucketId, fileId);
@@ -82,6 +99,16 @@ export class StorageServ {
   async filePreview( fileId ) {
     try {
       return await this.storage.getFilePreview(conf.bucketId, fileId);
+    } catch (error) {
+      throw new Error(
+        `Failed to get preview of image with id ${fileId} from the appwrite server : ${error.message}`
+      );
+    }
+  }
+  async previewPP( fileId ) {
+
+    try {
+      return await this.storage.getFilePreview(conf.PPbucketId, fileId);
     } catch (error) {
       throw new Error(
         `Failed to get preview of image with id ${fileId} from the appwrite server : ${error.message}`

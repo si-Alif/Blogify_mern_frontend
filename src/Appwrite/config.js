@@ -2,9 +2,14 @@ const conf = {
   endpointURL:String( import.meta.env.VITE_APPWRITE_ENDPOINT_URL),
   projectId:String( import.meta.env.VITE_APPWRITE_PROJECT_ID),
   bucketId:String( import.meta.env.VITE_APPWRITE_BUCKET_ID),
+  PPbucketId:String( import.meta.env.VITE_APPWRITE_PP_BUCKET_ID),
   databaseId:String( import.meta.env.VITE_APPWRITE_DATABASE_ID),
-  collectionId:String( import.meta.env.VITE_APPWRITE_COLLECTION_ID)
-};
+  collectionId:String( import.meta.env.VITE_APPWRITE_COLLECTION_ID),
+  apikeysecret:String( import.meta.env.VITE_APPWRITE_API_KEY_SECRET),
+  postLikes:String( import.meta.env.VITE_APPWRITE_POST_LIKES_COLLECTION_ID),
+  postDislikes:String( import.meta.env.VITE_APPWRITE_POST_DISLIKES_COLLECTION_ID),
+  postComments:String(import.meta.env.VITE_APPWRITE_POST_COMMENTS_COLLECTION_ID),
+}
 export default conf;
 
 

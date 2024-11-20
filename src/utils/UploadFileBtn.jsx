@@ -16,7 +16,7 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-function InputFileUpload({ onChange , value }, ref) {
+function InputFileUpload({ onChange , value , defaultValue, imgClass=`w-96 h-52 object-cover rounded-lg` }, ref) {
   const [preview, setPreview] = React.useState(value || "");
   console.log(preview)
 
@@ -49,13 +49,28 @@ function InputFileUpload({ onChange , value }, ref) {
   return (
     <div className='flex flex-col justify-center gap-2 items-center h-3/5'>
 
-      {/* Preview section */}
+     
       {preview && (
+        defaultValue="",
         <div >
           <img
+            
             src={preview}
             alt="Selected Preview"
-            style={{ width: '300px', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
+           
+            className={imgClass}
+          />
+        </div>
+      )}
+     
+      {defaultValue!="" && (
+        <div >
+          <img
+            
+            src={defaultValue}
+            alt="Selected Preview"
+           
+            className={imgClass}
           />
         </div>
       )}

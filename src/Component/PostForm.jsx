@@ -1,5 +1,12 @@
+import React,{useState , useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Tags, Input, UploadFileBtn, PostStatus, Button } from "../utils/utilsIndex.js";
+import {
+  Tags,
+  Input,
+  UploadFileBtn,
+  PostStatus,
+  Button,
+} from "../utils/utilsIndex.js";
 import RTE from "./RTE.jsx";
 import databaseService from "../Appwrite/DB.js";
 import storageService from "../Appwrite/Storage.js";
@@ -10,12 +17,31 @@ import authService from "../Appwrite/auth.js";
 
 const PostForm = () => {
   const location = useLocation();
-  const post = location.state
-  console.log(post)
+  const post = location.state;
+  console.log(post);
   const navigate = useNavigate();
   const userData = useSelector((state) => state.auth.userInfo);
+  const userStatus = useSelector((state) => state.auth.isAuthenticated);
   console.log(userData);
 
+  const [userInfo, setUserInfo] = useState(null)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const user = await authService.getCurrUserData("current");
+        if (user) {
+          setUserInfo(user); // Set user data if available
+          console.log("User data loaded:", user);
+        } else {
+          console.log("No user data available");
+        }
+      } catch (error) {
+        console.error("Failed to load user data:", error);
+      }
+    })();
+  }, []); 
+  
   const { control, handleSubmit } = useForm({
     defaultValues: {
       title: post?.title || "",
@@ -26,27 +52,26 @@ const PostForm = () => {
     },
   });
 
-  const onSubmit = async (data) => {
-    const user = await authService.getCurrUserData("current");
 
+
+  const onSubmit = async (data) => {
+    
     if (post && post.tags?.length > 0) {
-      const file = post.featuredImage ? post.featuredImage : null
-      console.log(file)
+      const file = post.featuredImage ? post.featuredImage : null;
+      console.log(file);
       if (file != data.featuredImage) {
         try {
-          if(file){
-
+          if (file) {
             await storageService.deleteFile(file);
           }
 
           const newFileId = await storageService.uploadFile(data.featuredImage);
-          const fileId = newFileId.$id
+          const fileId = newFileId.$id;
           data.featuredImage = fileId;
-          const dbPost = await databaseService.updatePost(post.$id,{
+          const dbPost = await databaseService.updatePost(post.$id, {
             ...data,
             userId: userData.userId,
-            createdBy: user.name,
-            
+            createdBy: userInfo.name,
           });
           if (dbPost) {
             navigate(`/post/${dbPost.$id}`);
@@ -67,7 +92,7 @@ const PostForm = () => {
         const dbPost = await databaseService.createPost({
           ...data,
           userId: userData.userId,
-          createdBy: user.name,
+          createdBy: userInfo.name,
         });
 
         if (dbPost) {
@@ -77,7 +102,23 @@ const PostForm = () => {
     }
   };
 
-  return (
+  {
+    /*
+    👁️👄👁️   ⭐⭐⭐⭐⭐ these statements won't work because of js's async nature these statements will use the null value of userInfo while the userInfo is being fetched from the database 
+    
+    👁️👁️👄👄👁️👁️ that's why   we need to give a check before using anything based on the cuurently fetching data if it is available or not , the if🗿🗿🗿 or ternary 🗿🗿🗿 operations works as the await keyword for the statement's to get there works done properly with the newly fetched data
+    // console.log(userInfo)
+    // console.log(userInfo.$id)npm
+    // console.log(userInfo.labels ="admin")
+    
+    */}
+    if (userInfo) {
+      console.log(userInfo)
+      console.log(userInfo.$id)
+      console.log(userInfo.labels =="admin")
+    }
+
+  return  userStatus == true && (userInfo?.labels=="admin" || userInfo?.labels=="creator") ? (
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="my-10 flex flex-col items-center gap-[5vh]"
@@ -105,7 +146,14 @@ const PostForm = () => {
               render={({ field }) => (
                 <Tags
                   {...field}
-                  vals={["React", "JavaScript", "CSS", "HTML", "Node.js", "MongoDB"]}
+                  vals={[
+                    "React",
+                    "JavaScript",
+                    "CSS",
+                    "HTML",
+                    "Node.js",
+                    "MongoDB",
+                  ]}
                   value={field.value || []}
                 />
               )}
@@ -131,7 +179,11 @@ const PostForm = () => {
             name="featuredImage"
             control={control}
             render={({ field }) => (
-              <UploadFileBtn {...field} value={field.value || ""}  onChange={(file) => field.onChange(file)} />
+              <UploadFileBtn
+                {...field}
+                value={field.value || ""}
+                onChange={(file) => field.onChange(file)}
+              />
             )}
           />
         </aside>
@@ -153,6 +205,39 @@ const PostForm = () => {
         <Button type="submit">Submit</Button>
       </div>
     </form>
+  ) : (
+    userStatus == true && userInfo?.labels !== "admin"?(
+
+      <section className="min-h-screen max-w-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+      <div className="p-8 md:p-12 bg-white dark:bg-gray-800 shadow-lg rounded-lg max-w-md w-full text-center transition-colors duration-300">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+          Become a Creator
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Join our creator community to unlock the ability to upload and share
+          your own posts.
+        </p>
+        <button className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-full shadow-md transform hover:scale-105 transition-transform duration-200" onClick={()=>navigate("/signup")}>
+          Get Started
+        </button>
+      </div>
+    </section>
+    ):(
+      <section className="min-h-screen max-w-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+      <div className="p-8 md:p-12 bg-white dark:bg-gray-800 shadow-lg rounded-lg max-w-md w-full text-center transition-colors duration-300">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+          Become a Creator
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Join our creator community to unlock the ability to upload and share
+          your own posts.
+        </p>
+        <button className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-full shadow-md transform hover:scale-105 transition-transform duration-200" onClick={()=>navigate("/signup")}>
+          Sign Up Now
+        </button>
+      </div>
+    </section>
+    )
   );
 };
 

@@ -1,45 +1,62 @@
-import { Client, Account, ID } from "appwrite";
+import { Client, Account, ID  } from "appwrite";
 import conf from "./config.js";
 import { login as authLogin, logout } from "../ReduxStore/auth.js";
+import { Users } from "node-appwrite";
 
 class AuthService {
   client = new Client();
+  creators = new Users(this.client); // Use this.client to initialize Users correctly
   account;
 
   constructor() {
-    this.client.setEndpoint(conf.endpointURL).setProject(conf.projectId);
+    this.client.setEndpoint(conf.endpointURL).setProject(conf.projectId)
     this.account = new Account(this.client);
   }
 
-  async signup({ email, password, fullName }, navigate, dispatch) {
+  // Sign-up function
+  async signup({ email, password, fullName, PP ,username }, navigate, dispatch) {
     try {
-      // Create a new user
-      const userInfo = await this.account.create(
-        ID.unique(),
-        email,
-        password,
-        fullName
-      );
+      const userInfo = await this.account.create(ID.unique(), email, password ,username );
 
       if (userInfo) {
-        // Send a verification email to the user for initial account creation
-        await this.createEmailVerification();
+        const session = await this.login({ email, password }, navigate);
 
-        console.log("Verification email sent. Please check your inbox.");
-        return userInfo; // Wait for email verification before login
+        await this.updateUserPrefs(fullName, PP);
+
+        return session;
       }
     } catch (error) {
-      throw new Error(
+      console.error(
         `Failed to sign up user with email ${email}: ${error.message}`
       );
+      return error.message;
+    }
+  }
+
+  async updateUserPrefs(fullName, PP) {
+    try {
+      await this.account.updatePrefs({
+        fullName: fullName,
+        profilePicture: PP,
+      });
+      console.log("User preferences updated successfully.");
+    } catch (error) {
+      console.error(`Failed to update user preferences: ${error.message}`);
     }
   }
 
   async login({ email, password }, navigate) {
-    const sessions = await this.account.listSessions();
-    if (sessions.total > 0) {
-      await this.deleteAllSessions();
-    }
+   try {
+    
+       await this.deleteAllSessions();
+     
+ 
+   } catch (error) {
+    throw new Error(`Failed to
+      check or delete sessions: ${error.message}`);
+ 
+   }
+
 
     try {
       const newSession = await this.account.createEmailPasswordSession(
@@ -70,52 +87,58 @@ class AuthService {
     }
   }
 
-  async createCreatorAccount() {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const secret = urlParams.get("secret");
-      const userId = urlParams.get("userId");
+  // async createCreatorAccount() {
+  //   try {
+  //     const urlParams = new URLSearchParams(window.location.search);
+  //     const secret = urlParams.get("secret");
+  //     const userId = urlParams.get("userId");
 
-      if (secret && userId) {
-        // Complete the verification process
-        const verification = await this.account.updateVerification(
-          userId,
-          secret
-        );
+  //     if (secret && userId) {
+  //       const verification = await this.account.updateVerification(
+  //         userId,
+  //         secret
+  //       );
 
-        if (verification) {
-          console.log("User verified successfully");
+  //       if (verification) {
+  //         console.log("User verified successfully");
 
-          // Check if the user is already registered or requesting creator status
-          const userData = await this.getCurrUserData();
-          if (userData && !userData.labels.includes("creator")) {
-            // If user is logged in and does not have "creator" label, assign it
-            await this.account.updateLabels(userId, ["creator"]);
-            console.log("User marked as creator");
-          } else if (!userData) {
-            // If this is a new account creation, proceed with auto-login
-            await this.login(
-              { email: userData.email, password: userData.password },
-              navigate
-            );
-          }
-        }
+  //         const userData = await this.getCurrUserData();
+  //         if (userData && !userData.labels.includes("creator")) {
+  //           await this.account.updateLabels(userId, ["creator"]);
+  //           console.log("User marked as creator");
+  //         } else if (!userData) {
+  //           await this.login(
+  //             { email: userData.email, password: userData.password },
+  //             navigate
+  //           );
+  //         }
+  //       }
 
-        return verification;
-      } else {
-        throw new Error("Missing userId or secret in URL parameters.");
-      }
-    } catch (error) {
-      throw new Error(
-        `Failed to process creator account verification: ${error.message}`
-      );
-    }
-  }
+  //       return verification;
+  //     } else {
+  //       throw new Error("Missing userId or secret in URL parameters.");
+  //     }
+  //   } catch (error) {
+  //     throw new Error(
+  //       `Failed to process creator account verification: ${error.message}`
+  //     );
+  //   }
+  // }
 
+ 
+  
+  // Usage example
+ 
   async deleteAllSessions() {
     try {
-      await this.account.deleteSessions()
-      console.log("Deleted existing sessions.");
+
+      const sessions= await this.account.listSessions()
+      if(sessions.total > 0) {
+        await this.account.deleteSessions();
+        console.log("Deleted existing sessions.");
+      }
+
+     
     } catch (error) {
       console.error(`Failed to check or delete sessions: ${error.message}`);
     }
@@ -137,7 +160,7 @@ class AuthService {
     try {
       return await this.account.createRecovery(
         email,
-        "https://localhost:5173/reset-password"
+        " "
       );
     } catch (error) {
       throw new Error(
@@ -174,12 +197,12 @@ class AuthService {
 
   async logout(dispatch, navigate) {
     try {
-      // Delete all sessions to log the user out
-      await this.deleteAllSessions();
+      const empty =  await this.deleteAllSessions();
+      if(empty){
+        dispatch(logout());
+        navigate("/login");
 
-      // Dispatch clearAuthState to reset auth data in Redux
-      dispatch(logout());
-      navigate("/login"); // Redirect to login page after logout
+      }
     } catch (error) {
       throw new Error(`Failed to log out user: ${error.message}`);
     }
