@@ -23,9 +23,7 @@ function Post() {
   const [showDisikedBy, setShowDislikedBy] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
-  const likedByFetched = useRef(false);
-  const dislikedByFetched = useRef(false);
-  const commentsFetched = useRef(false);
+
 
   useEffect(() => {
     const fetchPostData = async () => {
@@ -56,15 +54,25 @@ function Post() {
         if (likesData) {
           setLikes(likesData.total);
           const likedUsers = await Promise.all(
-            likesData.documents.map((like) => ServerSDK.postInteractions(like.userId))
+            likesData.documents.map((like) =>
+              ServerSDK.postInteractions(like.userId)
+            )
           );
-          setLikedByData(likedUsers.map((user) => user.prefs));
+          setLikedByData(
+            likedUsers.map((user) => ({
+              id: user.$id,
+              prefs: user.prefs,
+            }))
+          );
+          
         }
 
         if (dislikesData) {
           setDislikes(dislikesData.total);
           const dislikedUsers = await Promise.all(
-            dislikesData.documents.map((dislike) => ServerSDK.postInteractions(dislike.userId))
+            dislikesData.documents.map((dislike) =>
+              ServerSDK.postInteractions(dislike.userId)
+            )
           );
           setDislikedByData(dislikedUsers.map((user) => user.prefs));
         }
@@ -75,41 +83,10 @@ function Post() {
 
     fetchLikesAndDislikes();
   }, [postId]);
-  const [commentedByData, setCommentedByData] = useState([])
-  useEffect(() => {
-    const fetchComments = async () => {
-      try {
-        const commentsData = await databaseService.getAllComments(postId);
-        console.log(commentsData)
-        if (commentsData) {
-          const userComments = await Promise.all(
-            commentsData.documents.map(async (Comment) => {
-              const user = await ServerSDK.postInteractions(Comment.userId);
-              const profilePicture = await storageService.previewPP(user.prefs.profilePicture);
-              return {
-                userId: Comment.userId,
-                comment: Comment.comment,
-                fullName: user.prefs.fullName,
-                img: profilePicture || "/placeholder.jpg", 
-              };
-            })
-          );
-          setCommentedByData(userComments.map((user) => user));
-          
-        }
-      } catch (error) {
-        console.error("Error fetching comments:", error);
-      }
-    };
-  
-    fetchComments();
-  }, []);
 
-if (commentedByData) {
-  console.log(commentedByData)
-  
-}
-  
+ if (likedByData) {
+  console.log(likedByData)
+ }
 
   const handleLike = async () => {
     try {
@@ -139,96 +116,131 @@ if (commentedByData) {
   const [comment, setComment] = useState("");
 
   const handleComment = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (!comment.trim()) {
       alert("Comment cannot be empty.");
       return;
     }
     try {
-      await databaseService.postComments(postId, userData.$id , comment);
+      await databaseService.postComments(postId, userData.$id, comment);
       setComments((prev) => [
         ...prev,
-        { comment, userId: userData.$id, fullName: userData.fullName }, 
+        { comment, userId: userData.$id, fullName: userData.fullName },
       ]);
-      setComment(""); 
+      setComment("");
       alert("Comment added successfully.");
     } catch (error) {
       console.error("Error posting comment:", error);
     }
   };
-  
-  const toggleComments = () => setShowComments((prev) => !prev);
-  const toggleLikedBy = () => setShowLikedBy((prev) => !prev);
-  const toggleDislikedBy = () => setShowDislikedBy((prev) => !prev);
 
-  const [updatedLikedBy, setUpdatedLikedBy] = useState([])
+  const [commentedByData, setCommentedByData] = useState([]);
   useEffect(() => {
-    const fetchProfilePictures = async () => {
+    const fetchComments = async () => {
       try {
-        const updatedLikedBy = await Promise.all(
-          likedByData.map(async (user) => {
-            const imgData = await storageService.previewPP(user?.profilePicture);
-            return { ...user, img: imgData || "/placeholder.jpg" }; // Add the fetched image URL or fallback
+        const commentsData = await databaseService.getAllComments(postId);
+        console.log(commentsData);
+        if (commentsData) {
+          const userComments = await Promise.all(
+            commentsData.documents.map(async (Comment) => {
+              const user = await ServerSDK.postInteractions(Comment.userId);
+              const profilePicture = await storageService.previewPP(
+                user.prefs.profilePicture
+              );
+              return {
+                userId: Comment.userId,
+                comment: Comment.comment,
+                fullName: user.prefs.fullName,
+                img: profilePicture || "/placeholder.jpg",
+              };
+            })
+          );
+          setCommentedByData(userComments.map((user) => user));
+        }
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+      }
+    };
+
+    fetchComments();
+  }, [postId]);
+
+  if (commentedByData) {
+    console.log(commentedByData);
+  }
+
+  const toggleComments = useCallback(() => setShowComments((prev) => !prev), [showLikedBy]);
+  const toggleLikedBy = useCallback(() => setShowLikedBy((prev) => !prev), []);
+  const toggleDislikedBy = useCallback(() => setShowDislikedBy((prev) => !prev), []);
+
+
+  const [updatedLikedBy, setUpdatedLikedBy] = useState([]);
+  const [updatedDislikedBy, setUpdatedDislikedBy] = useState([]);
+  useEffect(() => {
+    const fetchProfilePictures = async (data, setData) => {
+      try {
+        const updatedData = await Promise.all(
+          data.map(async (user) => {
+            const profilePictureId = user?.prefs?.profilePicture; 
+            const imgData = profilePictureId
+              ? await storageService.previewPP(profilePictureId)
+              : "/placeholder.jpg";
+            return { ...user, img: imgData };
           })
         );
-        setUpdatedLikedBy(updatedLikedBy) // Update state with the fetched images
+        setData(updatedData);
       } catch (error) {
         console.error("Error fetching profile pictures:", error);
       }
     };
-
+  
     if (likedByData.length > 0) {
-      fetchProfilePictures();
+      fetchProfilePictures(likedByData, setUpdatedLikedBy);
     }
-  }, [likedByData]);
-  const [updatedDislikedBy, setUpdatedDislikedBy] = useState([])
-  useEffect(() => {
-    const fetchProfilePictures = async () => {
-      try {
-        const updatedDislikedBy = await Promise.all(
-          dislikedByData.map(async (user) => {
-            const imgData = await storageService.previewPP(user?.profilePicture);
-            return { ...user, img: imgData || "/placeholder.jpg" };
-          })
-        );
-        setUpdatedDislikedBy(updatedDislikedBy)
-      } catch (error) {
-        console.error("Error fetching profile pictures:", error);
-      }
-    };
-
-    if (likedByData.length > 0) {
-      fetchProfilePictures();
+    if (dislikedByData.length > 0) {
+      fetchProfilePictures(dislikedByData, setUpdatedDislikedBy);
     }
-  }, [dislikedByData]);
-
+  }, [likedByData, dislikedByData]);
   
 
-  // const [updatedCommentBy, setUpdatedCommentBy] = useState([])
-  // useEffect(() => {
-  //   const fetchProfilePictures = async () => {
-  //     try {
-  //       const updatedDislikedBy = await Promise.all(
-  //         comments?.map(async (user) => {
-  //           const imgData = await storageService.previewPP(user?.profilePicture);
-  //           return { ...user, img: imgData || "/placeholder.jpg" };
-  //         })
-  //       );
-  //       setUpdatedCommentBy(updatedDislikedBy)
-  //     } catch (error) {
-  //       console.error("Error fetching profile pictures:", error);
-  //     }
-  //   };
-
-  //   if (likedByData.length > 0) {
-  //     fetchProfilePictures();
-  //   }
-  // }, [comments]);
+ if (updatedLikedBy) {
+  console.log(updatedLikedBy)
+ }
+  console.log(userData);
 
 
-  // console.log(updatedCommentBy)
+  function Modal({ title, data, onClose }) {
+   
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="w-full max-w-lg rounded-md p-6 space-y-4 bg-gray-700 text-white">
+          <h2 className="text-xl font-bold">{title}</h2>
+          <div className="h-40 overflow-y-auto">
+            {data.length > 0 ? (
+              data.map((user, index) => (
+                <div key={index} className="flex items-center space-x-2 mb-2">
+                  <Link to={`/user/:${user.id}`}>
+                  <img className="w-10 h-10 rounded-full" src={user.img} alt={user.fullName} />
+                  <div>{user.prefs.fullName}</div>
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <p>No users found.</p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  console.log(userData)
+
 
   return (
     <main className="min-h-screen p-6 flex flex-col items-center bg-gray-900 text-white">
@@ -241,7 +253,9 @@ if (commentedByData) {
             ></div>
           )}
           <h1 className="text-4xl font-bold text-center">{post.title}</h1>
-          <div className="text-lg leading-relaxed">{HTMLReactParser(post.content)}</div>
+          <div className="text-lg leading-relaxed">
+            {HTMLReactParser(post.content)}
+          </div>
           <div className="text-sm space-y-2">
             <p>
               <span className="font-semibold">Author:</span> {post.createdBy}
@@ -295,66 +309,14 @@ if (commentedByData) {
               💬 Comments
             </button>
           </div>
-          {showLikedBy && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="w-full max-w-lg rounded-md p-6 space-y-4 bg-gray-700 text-white">
-                <h2 className="text-xl font-bold">Liked By</h2>
-                <div className="h-40 overflow-y-auto">
-                  {updatedLikedBy.length > 0 ? (
-                    updatedLikedBy.map((user, index) => (
-                      <div key={index} className="flex items-center space-x-2 mb-2">
-                        <img
-                          className="w-10 h-10 rounded-full"
-                          src={user.img} // Use the pre-fetched image
-                          alt={user.fullName}
-                        />
-                        <div>{user.fullName}</div>
-                        <div>{user.comment}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <p>No likes yet.</p>
-                  )}
+          {showLikedBy && updatedLikedBy.length > 0 && (
+            <Modal title="Liked By" data={updatedLikedBy} onClose={toggleLikedBy} />
+          )}
 
-                </div>
-                <button
-                  onClick={toggleLikedBy}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
+          {showDisikedBy && updatedDislikedBy.length > 0 && (
+            <Modal title="Disliked By" data={updatedDislikedBy} onClose={toggleDislikedBy} />
           )}
-          {showDisikedBy && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="w-full max-w-lg rounded-md p-6 space-y-4 bg-gray-700 text-white">
-                <h2 className="text-xl font-bold">Disliked By</h2>
-                <div className="h-40 overflow-y-auto">
-                  {updatedDislikedBy.length > 0 ? (
-                    updatedDislikedBy.map((user, index) => (
-                      <div key={index} className="flex items-center space-x-2 mb-2">
-                        <img
-                          className="w-10 h-10 rounded-full"
-                          src={user.img || "/placeholder.jpg"}
-                          alt={user.fullName}
-                        />
-                        <div>{user.fullName}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <p>No dislikes yet.</p>
-                  )}
-                </div>
-                <button
-                  onClick={toggleDislikedBy}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
+
           {showComments && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="w-full max-w-lg rounded-md p-6 space-y-4 bg-gray-700 text-white">
@@ -362,7 +324,10 @@ if (commentedByData) {
                 <div className="h-40 overflow-y-auto">
                   {commentedByData.length > 0 ? (
                     commentedByData.map((comment, index) => (
-                      <div key={index} className="flex items-center space-x-2 mb-2">
+                      <div
+                        key={index}
+                        className="flex items-center space-x-2 mb-2"
+                      >
                         <img
                           className="w-10 h-10 rounded-full"
                           src={comment.img || "/placeholder.jpg"}
@@ -378,10 +343,7 @@ if (commentedByData) {
                     <p>No comments yet.</p>
                   )}
                 </div>
-                <form
-                  onSubmit={handleComment}
-                  className="space-y-4"
-                >
+                <form onSubmit={handleComment} className="space-y-4">
                   <textarea
                     rows="4"
                     value={comment}
@@ -405,7 +367,6 @@ if (commentedByData) {
                     </button>
                   </div>
                 </form>
-
               </div>
             </div>
           )}
@@ -430,7 +391,6 @@ if (commentedByData) {
       )}
     </main>
   );
-
 }
 
 export default Post;

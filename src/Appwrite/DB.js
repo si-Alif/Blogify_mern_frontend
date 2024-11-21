@@ -150,7 +150,7 @@ export class DataBase {
       const response = await this.databases.createDocument(
         conf.databaseId,
         conf.postComments,
-        userId,
+        ID.unique(),
         {
           postId,
           userId,

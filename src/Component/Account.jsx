@@ -4,13 +4,10 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { debounce } from "lodash";
 import storageService from "../Appwrite/Storage";
 
-function Account() {
-  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
-  const userInfo = useSelector((state) => state.auth.userInfo);
+function Account({userId , isAuthenticated}) {
   const [data, setData] = useState(null);
   const [img, setImg] = useState("");
 
-  const userId = useMemo(() => userInfo?.$id, [userInfo?.$id]);
 
   const fetchUserData = useCallback(
     debounce(async (userId, controller) => {
@@ -19,7 +16,7 @@ function Account() {
         const info = await authService.getCurrUserData(userId, { signal: controller.signal });
         setData(info);
         
-        // Fetch profile picture preview URL
+       
         if (info.prefs.profilePicture) {
           const previewURL = await storageService.previewPP(info.prefs.profilePicture);
           setImg(previewURL);

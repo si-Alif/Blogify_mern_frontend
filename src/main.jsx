@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { reduxStore, persistor } from "./ReduxStore/store.js"
 import { SignUp, Post, PostForm, Home, Login, Account , Creator , CreatorProfile} from "./Component/componentIndex.js";
 import { PersistGate } from 'redux-persist/integration/react';
+import {SelfAccount , UserAccount} from "./Pages/pageIndex.js"
 
 
 const router = createBrowserRouter([
@@ -51,7 +52,11 @@ const router = createBrowserRouter([
       },
       {
         path: '/account',
-        element: <Account />,
+        element: <SelfAccount />,
+      },
+      {
+        path: '/user/:userId',
+        element: <UserAccount />,
       }
     ],
   },
