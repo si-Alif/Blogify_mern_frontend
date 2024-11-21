@@ -74,7 +74,11 @@ function Post() {
               ServerSDK.postInteractions(dislike.userId)
             )
           );
-          setDislikedByData(dislikedUsers.map((user) => user.prefs));
+          setDislikedByData(dislikedUsers.map((user) =>({
+            id: user.$id,
+            prefs: user.prefs,
+  
+          })));
         }
       } catch (error) {
         console.error("Error fetching likes/dislikes:", error);
@@ -169,6 +173,25 @@ function Post() {
     console.log(commentedByData);
   }
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: "Check out this post!",
+          text: "Hey, check out this amazing post!",
+          url: window.location.href,
+        })
+        .then(() => console.log("Post shared successfully!"))
+        .catch((error) => console.error("Error sharing the post:", error));
+    } else {
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => alert("Post URL copied to clipboard!"))
+        .catch((error) => console.error("Error copying URL:", error));
+    }
+  };
+  
+
   const toggleComments = useCallback(() => setShowComments((prev) => !prev), [showLikedBy]);
   const toggleLikedBy = useCallback(() => setShowLikedBy((prev) => !prev), []);
   const toggleDislikedBy = useCallback(() => setShowDislikedBy((prev) => !prev), []);
@@ -246,11 +269,8 @@ function Post() {
     <main className="min-h-screen p-6 flex flex-col items-center bg-gray-900 text-white">
       {post ? (
         <div className="w-full max-w-3xl shadow-lg rounded-md p-6 space-y-6 bg-gray-800">
-          {img && (
-            <div
-              className="w-full h-72 bg-cover bg-center rounded-md"
-              style={{ backgroundImage: `url(${img})` }}
-            ></div>
+          {img!="" && (
+           <img src={img} alt="" loading="lazy" className="w-full h-[50vh] object-fill bg-cover bg-center rounded-xl" />
           )}
           <h1 className="text-4xl font-bold text-center">{post.title}</h1>
           <div className="text-lg leading-relaxed">
@@ -273,7 +293,7 @@ function Post() {
               }).format(new Date(post.$createdAt))}
             </p>
           </div>
-          <div className="flex justify-between items-center space-x-4 mt-6">
+          <div className="flex justify-around flex-row items-center space-x-4 mt-6">
             <span className="w-1/4 flex flex-col justify-center gap-3 items-center">
               <button
                 onClick={handleLike}
@@ -308,6 +328,12 @@ function Post() {
             >
               💬 Comments
             </button>
+            <button
+    onClick={handleShare}
+    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center space-x-2"
+  >
+    🔗 Share
+  </button>
           </div>
           {showLikedBy && updatedLikedBy.length > 0 && (
             <Modal title="Liked By" data={updatedLikedBy} onClose={toggleLikedBy} />
@@ -328,11 +354,13 @@ function Post() {
                         key={index}
                         className="flex items-center space-x-2 mb-2"
                       >
+                         <Link to={`/user/:${comment.userId}`}>
                         <img
                           className="w-10 h-10 rounded-full"
                           src={comment.img || "/placeholder.jpg"}
                           alt={comment.fullName}
-                        />
+                          />
+                          </Link>
                         <div>
                           <p className="font-semibold">{comment.fullName}</p>
                           <p>{comment.comment}</p>
