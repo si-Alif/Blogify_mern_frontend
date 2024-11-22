@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react'; 
+import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
 import databaseService from '../Appwrite/DB';
 const PreviewCard = React.lazy(() => import('./PreviewCard'));
-
 import { useSelector } from 'react-redux';
 
 // Custom hook for fetching and caching posts
@@ -59,32 +58,48 @@ function Home() {
     }
 
     return (
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+      <section
+        className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 p-4"
+        aria-label="Posts Grid"
+      >
         {posts.map((post) => (
-          <div key={post.$id} className="max-w-[22vw]">
-            <PreviewCard {...post} />
+          <div
+            key={post.$id}
+            className="max-w-[23vw] h-[55vh] p-4  bg-white dark:bg-gray-800 shadow-lg shadow-gray-500 dark:shadow-blue-600 rounded-lg transition hover:shadow-lg"
+          >
+            <Suspense fallback={<PlaceholderCard />}>
+              <PreviewCard {...post} />
+            </Suspense>
           </div>
         ))}
-      </div>
+      </section>
     );
   }, [isAuthenticated, loading, posts]);
 
   return (
-    <main className="w-screen overflow-x-hidden overflow-y-scroll scroll bg-blue-600 dark:bg-gray-700 flex justify-center min-h-screen">
-      <div className="w-full mt-10 p-4 flex justify-evenly">{renderContent}</div>
+    <main className="w-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center min-h-screen">
+      <header className="w-full py-5 bg-blue-600 dark:bg-gray-800 text-white text-center shadow-lg shadow-blue-700">
+        <h1 className="text-2xl font-bold">Welcome to Home</h1>
+      </header>
+      <div className="w-full flex justify-center py-10">{renderContent}</div>
     </main>
   );
 }
 
 // Component for reusable messages
 const ContentMessage = React.memo(({ message, bgColor = "bg-gray-300" }) => (
-  <div className="w-screen flex justify-center">
+  <div className="w-full flex justify-center items-center min-h-[50vh]">
     <h2
-      className={`text-center text-gray-700 dark:text-gray-300 py-10 text-3xl ${bgColor}`}
+      className={`text-center text-gray-800 dark:text-gray-200 py-6 px-8 rounded-lg shadow-lg shadow-blue-600 text-lg font-medium ${bgColor}`}
     >
       {message}
     </h2>
   </div>
 ));
+
+// Placeholder for lazy-loaded PreviewCard
+const PlaceholderCard = () => (
+  <div className="h-32 w-full bg-gray-300 dark:bg-gray-700 animate-pulse rounded-lg" />
+);
 
 export default Home;

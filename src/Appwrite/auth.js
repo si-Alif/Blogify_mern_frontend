@@ -40,6 +40,7 @@ class AuthService {
       await this.account.updatePrefs({
         fullName: fullName,
         profilePicture: PP,
+        status: 'active'
         
       });
       console.log("User preferences updated successfully.");

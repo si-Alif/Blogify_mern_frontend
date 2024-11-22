@@ -2,40 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-.scroll {
-  @apply overflow-y-scroll;
 
-  /* WebKit Scrollbar Styles */
-  &::-webkit-scrollbar {
-    width: 10px !important;
-    height: 10px !important;
-  }
-
-  &::-webkit-scrollbar-track {
-    background-color: #555555 !important; /* Gray track */
-    border-radius: 8px !important;       /* Rounded track */
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #000000 !important; /* Black thumb */
-    border-radius: 100px !important;       /* Fully rounded thumb */
-    border: 3px solid #555555 !important; /* Creates spacing around thumb */
-  }
-
-  /* Firefox Scrollbar Styles */
-  scrollbar-width:thin !important; 
-  scrollbar-color: #000000 #555555 !important; /* Thumb and track color */
+.scrollbar-thumb {
+  @apply rounded-lg;
 }
 
-
-/* Light theme styles */
-body.light-theme {
-  --scrollbar-track: #d3d3d3; /* Light gray background for the scrollbar track */
-  --scrollbar-thumb: #000000; /* Black thumb for the scrollbar */
+body.light-theme .scrollbar-thumb {
+  background-color: theme('colors.light.scrollbarThumb');
 }
 
-/* Dark theme styles */
-body.dark-theme {
-  --scrollbar-track: #555555; /* Dark gray background for the scrollbar track */
-  --scrollbar-thumb: #000000; /* Black thumb for the scrollbar */
+body.light-theme .scrollbar-track {
+  background-color: theme('colors.light.scrollbarTrack');
+}
+
+body.dark-theme .scrollbar-thumb {
+  background-color: theme('colors.dark.scrollbarThumb');
+}
+
+body.dark-theme .scrollbar-track {
+  background-color: theme('colors.dark.scrollbarTrack');
 }

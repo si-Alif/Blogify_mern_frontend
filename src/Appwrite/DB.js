@@ -127,14 +127,17 @@ export class DataBase {
   }
   
   async postDisLike(postId, userId) {
+    const uuid= ID.unique()
     try {
+      console.log(conf.postLikes)
       const response = await this.databases.createDocument(
         conf.databaseId,
         conf.postDislikes,
-        userId,
+        uuid,
         {
-          postId,
-          userId,
+          docId:uuid,
+          postId:postId,
+          userId: userId,
 
         }
 
@@ -151,16 +154,18 @@ export class DataBase {
     }
   }
   async postComments(postId, userId , comment) {
+    const uuid= ID.unique()
     try {
+      console.log(conf.postLikes)
       const response = await this.databases.createDocument(
         conf.databaseId,
         conf.postComments,
-        ID.unique(),
+        uuid,
         {
-          postId,
-          userId,
-          comment,
-
+          docId:uuid,
+          postId:postId,
+          userId: userId,
+          comment
         }
 
       );
@@ -173,6 +178,27 @@ export class DataBase {
       throw new Error(
         "Error updating post: " + error.message
       )
+    }
+  }
+
+  async updateComment(data) {
+    try {
+      const response = await this.databases.updateDocument(
+        conf.databaseId,
+        conf.postComments,
+        data.docId,
+       
+        {
+          ...data,
+        }
+      );
+      if (response) {
+        return response;
+      } else {
+        this.throwError("Failed to update document appwrite");
+      }
+    } catch (error) {
+      throw new Error("Error updating post: " + error.message);
     }
   }
 
@@ -263,6 +289,22 @@ export class DataBase {
         conf.databaseId,
         conf.postDislikes,
         likeId
+      );
+      if (response) {
+        return response;
+      } else {
+        this.throwError("Failed to delete document appwrite");
+      }
+    } catch (error) {
+      throw new Error("Error unliking: " + error.message);
+    }
+  }
+  async deleteComment(docId) {
+    try {
+      const response = await this.databases.deleteDocument(
+        conf.databaseId,
+        conf.postComments,
+        docId
       );
       if (response) {
         return response;

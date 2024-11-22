@@ -7,9 +7,8 @@ function PreviewCard({ $id, title, featuredImage }) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    let isMounted = true; 
+    let isMounted = true;
 
-    
     storageService.filePreview(featuredImage)
       .then((img) => {
         if (isMounted && img) {
@@ -24,40 +23,42 @@ function PreviewCard({ $id, title, featuredImage }) {
       });
 
     return () => {
-      isMounted = false; 
+      isMounted = false;
     };
   }, [featuredImage]);
 
   return (
-    <Link to={`/post/${$id}`}>
-      <section
-        className="lg:max-h-[40vh] max-h-[20vh] sm:max-h-[30vh] lg:min-h-[35vh] sm:min-h-[25vh] object-cover py-3 px-4 rounded-xl bg-blue-100 hover:p-3 duration-500 dark:bg-slate-400 flex flex-col justify-between gap-3 items-center"
-        style={{ minHeight: "25vh", width: "100%" }} 
+    <Link className='flex justify-center items-center flex-col' to={`/post/${$id}`}>
+      <div
+        className="w-11/12 bg-white dark:bg-gray-800 shadow-lg shadow-gray-700 rounded-lg overflow-hidden transform transition duration-300 hover:scale-105 active:scale-90 hover:shadow-xl hover:shadow-gray-600 "
+        style={{ minHeight: '350px' }}
       >
         {/* Image Section */}
         {error ? (
           <div
-            className="w-5/6 h-[25vh] flex justify-center items-center bg-gray-200 rounded-lg dark:bg-gray-500"
-            style={{ width: "100%", height: "200px" }}
+            className="flex items-center justify-center h-48 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300"
           >
-            <span className="text-gray-500 dark:text-gray-300">Image unavailable</span>
+            <span>Image unavailable</span>
           </div>
         ) : (
           <img
-            className="w-5/6 rounded-lg object-contain max-h-[25vh] transition-opacity duration-300"
-            src={postImage || '/vite.svg'} 
+            className="w-full h-[30vh] max-h-[40vh] object-fill rounded-xl"
+            src={postImage || '/vite.svg'}
             alt={title}
-            width="300" 
-            height="200" 
-            loading="lazy" 
+            loading="lazy"
           />
         )}
 
-        {/* Title Section */}
-        <h1 className="text-lg text-black font-semibold dark:text-gray-600 overflow-hidden text-ellipsis max-h-16">
-          {title}
-        </h1>
-      </section>
+        {/* Content Section */}
+        <div className="p-4 flex flex-col gap-2">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 line-clamp-2">
+            {title}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-3">
+            Click to view more details about this post.
+          </p>
+        </div>
+      </div>
     </Link>
   );
 }
