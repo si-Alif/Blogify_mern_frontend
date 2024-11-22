@@ -70,7 +70,7 @@ function Home() {
   }, [isAuthenticated, loading, posts]);
 
   return (
-    <main className="w-screen overflow-x-hidden overflow-y-scroll bg-blue-600 dark:bg-gray-700 flex justify-center min-h-screen">
+    <main className="w-screen overflow-x-hidden overflow-y-scroll scroll bg-blue-600 dark:bg-gray-700 flex justify-center min-h-screen">
       <div className="w-full mt-10 p-4 flex justify-evenly">{renderContent}</div>
     </main>
   );

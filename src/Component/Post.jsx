@@ -50,64 +50,116 @@ function Post() {
           databaseService.getAllLikes(postId),
           databaseService.getAllDislikes(postId),
         ]);
-
+  
+        // Process Likes
         if (likesData) {
           setLikes(likesData.total);
+  
           const likedUsers = await Promise.all(
-            likesData.documents.map((like) =>
-              ServerSDK.postInteractions(like.userId)
-            )
+            likesData.documents.map(async (like) => {
+              const user = await ServerSDK.postInteractions(like.userId);
+              return {
+                docId: like.$id,
+                postId: like.postId,
+                id: user.$id,
+                prefs: user.prefs,
+              };
+            })
           );
-          setLikedByData(
-            likedUsers.map((user) => ({
-              id: user.$id,
-              prefs: user.prefs,
-            }))
-          );
-          
+  
+          setLikedByData(likedUsers);
         }
-
+  
+        // Process Dislikes
         if (dislikesData) {
           setDislikes(dislikesData.total);
-          const dislikedUsers = await Promise.all(
-            dislikesData.documents.map((dislike) =>
-              ServerSDK.postInteractions(dislike.userId)
-            )
-          );
-          setDislikedByData(dislikedUsers.map((user) =>({
-            id: user.$id,
-            prefs: user.prefs,
   
-          })));
+          const dislikedUsers = await Promise.all(
+            dislikesData.documents.map(async (dislike) => {
+              const user = await ServerSDK.postInteractions(dislike.userId);
+              console.log(user)
+              return {
+                docId: dislike.$id,
+                postId: dislike.postId,
+                id: user.$id,
+                prefs: user.prefs,
+              };
+            })
+          );
+  
+          setDislikedByData(dislikedUsers);
         }
       } catch (error) {
         console.error("Error fetching likes/dislikes:", error);
       }
     };
-
+  
     fetchLikesAndDislikes();
   }, [postId]);
-
- if (likedByData) {
-  console.log(likedByData)
- }
-
+  
   const handleLike = async () => {
     try {
-      await databaseService.postLike(postId, userData.$id);
+      const userLiked = likedByData.find(
+        (user) => user.id === userData.$id && user.postId === postId
+      )?.docId || null;
+  
+      if (userLiked) {
+        await databaseService.unLikePost(userLiked);
+        setLikes((prev) => prev - 1); 
+        setLikedByData((prev) => prev.filter((user) => user.docId !== userLiked));
+        console.log("Post unliked successfully.");
+      } else {
+        const newLikeDoc = await databaseService.postLike(postId, userData.$id);
+        setLikes((prev) => prev + 1);
+        setLikedByData((prev) => [
+          ...prev,
+          {
+            docId: newLikeDoc.$id,
+            postId,
+            id: userData.$id,
+            prefs: userData.prefs,
+          },
+        ]);
+        console.log("Post liked successfully.");
+      }
     } catch (error) {
-      console.error("Error liking post:", error);
+      console.error("Error liking/unliking post:", error);
     }
   };
-
+  
   const handleDislike = async () => {
     try {
-      await databaseService.postDisLike(postId, userData.$id);
+      const userDisliked = dislikedByData.find(
+        (user) => user.id === userData.$id && user.postId === postId
+      )?.docId || null;
+  
+      if (userDisliked) {
+        await databaseService.unDislikePost(userDisliked);
+        setDislikes((prev) => prev - 1); 
+        setDislikedByData((prev) =>
+          prev.filter((user) => user.docId !== userDisliked)
+        );
+        console.log("Post undisliked successfully.");
+      } else {
+
+        const newDislikeDoc = await databaseService.postDisLike(postId, userData.$id);
+        setDislikes((prev) => prev + 1); 
+        setDislikedByData((prev) => [
+          ...prev,
+          {
+            docId: newDislikeDoc.$id,
+            postId,
+            id: userData.$id,
+            prefs: userData.prefs,
+          },
+        ]);
+        console.log("Post disliked successfully.");
+      }
     } catch (error) {
-      console.error("Error disliking post:", error);
+      console.error("Error disliking/undisliking post:", error);
     }
   };
-
+  
   const handleDelete = async () => {
     try {
       await databaseService.deletePost(postId);
@@ -129,7 +181,7 @@ function Post() {
       await databaseService.postComments(postId, userData.$id, comment);
       setComments((prev) => [
         ...prev,
-        { comment, userId: userData.$id, fullName: userData.fullName },
+        { comment, userId: userData.$id, fullName: userData.prefs.fullName },
       ]);
       setComment("");
       alert("Comment added successfully.");
@@ -229,7 +281,8 @@ function Post() {
  if (updatedLikedBy) {
   console.log(updatedLikedBy)
  }
-  console.log(userData);
+
+
 
 
   function Modal({ title, data, onClose }) {
@@ -242,7 +295,7 @@ function Post() {
             {data.length > 0 ? (
               data.map((user, index) => (
                 <div key={index} className="flex items-center space-x-2 mb-2">
-                  <Link to={`/user/:${user.id}`}>
+                  <Link to={`/user/${user.id}`}>
                   <img className="w-10 h-10 rounded-full" src={user.img} alt={user.fullName} />
                   <div>{user.prefs.fullName}</div>
                   </Link>
@@ -354,7 +407,7 @@ function Post() {
                         key={index}
                         className="flex items-center space-x-2 mb-2"
                       >
-                         <Link to={`/user/:${comment.userId}`}>
+                         <Link to={`/user/${comment.userId}`}>
                         <img
                           className="w-10 h-10 rounded-full"
                           src={comment.img || "/placeholder.jpg"}

@@ -38,6 +38,7 @@ class AuthService {
       await this.account.updatePrefs({
         fullName: fullName,
         profilePicture: PP,
+        
       });
       console.log("User preferences updated successfully.");
     } catch (error) {
@@ -45,37 +46,38 @@ class AuthService {
     }
   }
 
+  
+
   async login({ email, password }, navigate) {
-   try {
-    
-       await this.deleteAllSessions();
-     
- 
-   } catch (error) {
-    throw new Error(`Failed to
-      check or delete sessions: ${error.message}`);
- 
-   }
-
-
     try {
+      // Delete all sessions before logging in
+      await this.deleteAllSessions();
+    } catch (error) {
+      throw new Error(`Failed to check or delete sessions: ${error.message}`);
+    }
+  
+    try {
+      // Create a new session
       const newSession = await this.account.createEmailPasswordSession(
         email,
         password
       );
       console.log("Logged in:", newSession);
-
+  
+      // Fetch current user data
       const userData = await this.getCurrUserData();
-
+  
       if (userData) {
         navigate("/");
-        return newSession;
+        // Return both session and userInfo
+        return { session: newSession, userInfo: userData };
       }
     } catch (error) {
-      console.log(`Failed to log in user: ${error.message}`);
-      return error.message;
+      console.error(`Failed to log in user: ${error.message}`);
+      throw new Error(error.message);
     }
   }
+  
 
   async createEmailVerification() {
     try {

@@ -3,22 +3,25 @@ import { useSelector } from "react-redux";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { debounce } from "lodash";
 import storageService from "../Appwrite/Storage";
+import ServerSDK from "../Appwrite/ServerSDK";
 
 function Account({userId , isAuthenticated}) {
   const [data, setData] = useState(null);
   const [img, setImg] = useState("");
 
+ console.log(userId)
 
   const fetchUserData = useCallback(
     debounce(async (userId, controller) => {
       if (!userId) return;
       try {
-        const info = await authService.getCurrUserData(userId, { signal: controller.signal });
-        setData(info);
-        
+       const info = await ServerSDK.postInteractions(userId)
+         if (info) {
+          setData(info)
+         } 
        
-        if (info.prefs.profilePicture) {
-          const previewURL = await storageService.previewPP(info.prefs.profilePicture);
+        if (info?.prefs?.profilePicture) {
+          const previewURL = await storageService.previewPP(info?.prefs?.profilePicture);
           setImg(previewURL);
         }
       } catch (error) {

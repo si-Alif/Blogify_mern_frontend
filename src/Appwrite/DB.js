@@ -98,19 +98,23 @@ export class DataBase {
   }
 
   async postLike(postId, userId) {
+    const uuid= ID.unique()
     try {
+      console.log(conf.postLikes)
       const response = await this.databases.createDocument(
         conf.databaseId,
         conf.postLikes,
-        userId,
+        uuid,
         {
-          postId,
-          userId,
+          docId:uuid,
+          postId:postId,
+          userId: userId,
 
         }
 
       );
       if (response) {
+        console.log(response)
         return response
       } else {
         this.throwError("Failed to update document appwrite");
@@ -121,6 +125,7 @@ export class DataBase {
       )
     }
   }
+  
   async postDisLike(postId, userId) {
     try {
       const response = await this.databases.createDocument(
@@ -234,6 +239,38 @@ export class DataBase {
       }
     } catch (error) {
       throw new Error("Error deleting post: " + error.message);
+    }
+  }
+  async unLikePost(likeId) {
+    try {
+      const response = await this.databases.deleteDocument(
+        conf.databaseId,
+        conf.postLikes,
+        likeId
+      );
+      if (response) {
+        return response;
+      } else {
+        this.throwError("Failed to delete document appwrite");
+      }
+    } catch (error) {
+      throw new Error("Error unliking: " + error.message);
+    }
+  }
+  async unDislikePost(likeId) {
+    try {
+      const response = await this.databases.deleteDocument(
+        conf.databaseId,
+        conf.postDislikes,
+        likeId
+      );
+      if (response) {
+        return response;
+      } else {
+        this.throwError("Failed to delete document appwrite");
+      }
+    } catch (error) {
+      throw new Error("Error unliking: " + error.message);
     }
   }
 }

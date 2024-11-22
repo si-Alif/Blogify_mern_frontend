@@ -3,11 +3,39 @@
 @tailwind utilities;
 
 .scroll {
-  scrollbar-width: none; /* Firefox */
-  scrollbar-color: #888 #f1f1f1; /* Firefox */
-  overflow-y: scroll; /* Add vertical scroll */
-  scrollbar-track-color: aqua;
- 
+  @apply overflow-y-scroll;
+
+  /* WebKit Scrollbar Styles */
+  &::-webkit-scrollbar {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #555555 !important; /* Gray track */
+    border-radius: 8px !important;       /* Rounded track */
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #000000 !important; /* Black thumb */
+    border-radius: 100px !important;       /* Fully rounded thumb */
+    border: 3px solid #555555 !important; /* Creates spacing around thumb */
+  }
+
+  /* Firefox Scrollbar Styles */
+  scrollbar-width:thin !important; 
+  scrollbar-color: #000000 #555555 !important; /* Thumb and track color */
 }
 
 
+/* Light theme styles */
+body.light-theme {
+  --scrollbar-track: #d3d3d3; /* Light gray background for the scrollbar track */
+  --scrollbar-thumb: #000000; /* Black thumb for the scrollbar */
+}
+
+/* Dark theme styles */
+body.dark-theme {
+  --scrollbar-track: #555555; /* Dark gray background for the scrollbar track */
+  --scrollbar-thumb: #000000; /* Black thumb for the scrollbar */
+}

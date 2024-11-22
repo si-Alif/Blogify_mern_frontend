@@ -20,20 +20,28 @@ function Login() {
 
 
   const onSubmit = async (data) => {
-    const loginSession = await authService.login(
-      { ...data },
-      navigate,
-      dispatch
-    );
-    console.log(loginSession)
-    if (loginSession) {
-      
-      dispatch(login({userInfo: loginSession }))
-    }else{
-      alert("Invalid Email or Password")
+    try {
+      // Call the login method
+      const loginResponse = await authService.login({ ...data }, navigate);
+      console.log("Login Response:", loginResponse);
+  
+      if (loginResponse) {
+        // Dispatch session and userInfo to Redux
+        dispatch(
+          login({
+            session: loginResponse.session,
+            userInfo: loginResponse.userInfo,
+          })
+        );
+      } else {
+        alert("Invalid Email or Password");
+      }
+    } catch (error) {
+      console.error("Login error:", error.message);
+      alert("An error occurred during login. Please try again.");
     }
-   
   };
+  
 
   const userData = useSelector((state) => state.auth.userInfo);
   console.log(userData)
