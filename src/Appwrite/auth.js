@@ -17,19 +17,21 @@ class AuthService {
   async signup({ email, password, fullName, PP ,username }, navigate, dispatch) {
     try {
       const userInfo = await this.account.create(ID.unique(), email, password ,username );
-
+     
       if (userInfo) {
         const session = await this.login({ email, password }, navigate);
 
         await this.updateUserPrefs(fullName, PP);
 
-        return session;
+        // return session;
+      }else{
+        return userInfo
       }
     } catch (error) {
       console.error(
         `Failed to sign up user with email ${email}: ${error.message}`
       );
-      return error.message;
+      return error
     }
   }
 
@@ -74,7 +76,7 @@ class AuthService {
       }
     } catch (error) {
       console.error(`Failed to log in user: ${error.message}`);
-      throw new Error(error.message);
+     return error
     }
   }
   

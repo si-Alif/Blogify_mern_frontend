@@ -9,8 +9,6 @@ function Account({userId , isAuthenticated}) {
   const [data, setData] = useState(null);
   const [img, setImg] = useState("");
 
- console.log(userId)
-
   const fetchUserData = useCallback(
     debounce(async (userId, controller) => {
       if (!userId) return;
@@ -43,9 +41,6 @@ function Account({userId , isAuthenticated}) {
       fetchUserData.cancel();
     };
   }, [userId, fetchUserData]);
-
-  console.log(img)
-  console.log(data)
 
   return (
     <main className="w-screen flex items-center overflow-x-hidden justify-center min-h-screen bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">

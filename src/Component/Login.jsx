@@ -1,32 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { Input, Button } from "../utils/utilsIndex.js";
-import { useForm } from "react-hook-form";
-import { Controller } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { AccountCircle } from "@mui/icons-material";
 import authService from "../Appwrite/auth.js";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import databaseService from "../Appwrite/DB.js";
-import {login} from "../ReduxStore/auth.js"
+import { useDispatch } from "react-redux";
+import { login } from "../ReduxStore/auth.js";
 
 function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // State to store error message
 
-  const { register, handleSubmit, control } = useForm();
-
-  const userStatus = useSelector((state) => state.auth.isAuthenticated);
-  
-
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm();
 
   const onSubmit = async (data) => {
+    setLoading(true);
+    setErrorMessage(""); // Reset error message on new submission
     try {
-      // Call the login method
-      const loginResponse = await authService.login({ ...data }, navigate);
-      console.log("Login Response:", loginResponse);
-  
-      if (loginResponse) {
-        // Dispatch session and userInfo to Redux
+      const loginResponse = await authService.login(data, navigate);
+
+      if (loginResponse?.session && loginResponse?.userInfo) {
         dispatch(
           login({
             session: loginResponse.session,
@@ -34,82 +34,140 @@ function Login() {
           })
         );
       } else {
-        alert("Invalid Email or Password");
+        setErrorMessage("Invalid Email or Password. Please try again."); // Set error message
       }
     } catch (error) {
       console.error("Login error:", error.message);
-      alert("An error occurred during login. Please try again.");
+      setErrorMessage(
+        error.message || "An unexpected error occurred. Please try again."
+      ); // Display error message
+    } finally {
+      setLoading(false);
     }
   };
-  
-
-  const userData = useSelector((state) => state.auth.userInfo);
-  console.log(userData)
 
   return (
-    <>
-      <main
-        className="w-screen h-screen overflow-hidden flex flex-col justify-center items-center bg-cyan-100"
+    <main className="w-screen h-screen flex justify-center items-center bg-gradient-to-br from-blue-100 via-cyan-200 to-blue-300 p-4">
+      <form
         onSubmit={handleSubmit(onSubmit)}
+        className="w-full md:w-96 bg-white rounded-3xl px-8 py-10 shadow-2xl flex flex-col items-center gap-5"
       >
-        <form className="flex flex-col justify-center items-center gap-3  bg-slate-400 rounded-3xl px-16 py-8 shadow-2xl shadow-zinc-700">
-          <AccountCircle sx={{ color: "action.active", fontSize: 180 }} />
-          <div className="py-6 px-10 text-center rounded-xl shadow-md max-w-md mx-auto">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">
-              Please Login to Your Account!
-            </h2>
-            <div className="text-sm text-gray-500">
-              Don’t have an account?{" "}
-              <Link
-                to="/signup"
-                className="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition duration-200 ease-in-out"
-              >
-                Click here to Sign UP
-              </Link>
-            </div>
-          </div>
+        <AccountCircle sx={{ fontSize: 100, color: "#3b82f6" }} />
+        <h2 className="text-xl font-semibold text-gray-700 text-center">
+          Welcome Back!
+        </h2>
+        <p className="text-sm text-gray-500 text-center mb-4">
+          Don’t have an account?{" "}
+          <Link
+            to="/signup"
+            className="text-blue-600 font-medium hover:underline"
+          >
+            Sign Up Here
+          </Link>
+        </p>
 
+        {/* Error Message Display */}
+        {errorMessage && (
+          <div className="w-full p-3 text-sm text-red-600 bg-red-100 border border-red-400 rounded-md text-center">
+            {errorMessage}
+          </div>
+        )}
+
+        {/* Email Input */}
+        <div className="w-full">
           <Controller
             name="email"
             control={control}
+            rules={{
+              required: "Email is required",
+              pattern: {
+                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+                message: "Invalid email address",
+              },
+            }}
             render={({ field }) => (
               <Input
                 {...field}
-                className={"w-[25vw] p-7"}
-                label={"Enter your email address"}
-                type={"email"}
-                inputStyle={{ color: "black" }}
-                required={true}
-                icon={true}
+                label="Email Address"
+                type="email"
+                className="w-full p-3 border rounded-md shadow-sm focus:ring focus:ring-blue-300"
               />
             )}
           />
+          {errors.email && (
+            <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
+          )}
+        </div>
+
+        {/* Password Input */}
+        <div className="w-full">
           <Controller
             name="password"
             control={control}
+            rules={{
+              required: "Password is required",
+              minLength: {
+                value: 6,
+                message: "Password must be at least 6 characters",
+              },
+            }}
             render={({ field }) => (
               <Input
                 {...field}
-                className={"w-[25vw] p-7"}
-                label={"Enter Password"}
-                type={"password"}
-                inputStyle={{ color: "black" }}
-                required={true}
-                icon={false}
+                label="Password"
+                type="password"
+                className="w-full p-3 border rounded-md shadow-sm focus:ring focus:ring-blue-300"
               />
             )}
           />
+          {errors.password && (
+            <p className="text-xs text-red-500 mt-1">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
 
-          <Button
-            className={"bg-blue-700 text-white text-xl"}
-            textColor="bg-cyan-600"
-            label={"Login"}
-            icon={"false"}
-            type={"submit"}
-          />
-        </form>
-      </main>
-    </>
+        {/* Submit Button */}
+        <Button
+  type="submit"
+  className={`w-full p-3 text-white rounded-md text-lg ${
+    loading
+      ? "bg-blue-400 cursor-not-allowed"
+      : "bg-blue-600 hover:bg-blue-700"
+  }`}
+  disabled={loading}
+>
+  {loading ? (
+    <div className="flex items-center justify-center">
+      <svg
+        className="animate-spin h-5 w-5 mr-2 text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        ></circle>
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 100 8v4a8 8 0 01-8-8z"
+        ></path>
+      </svg>
+      Logging In...
+    </div>
+  ) : (
+    "Login"
+  )}
+</Button>
+
+      </form>
+    </main>
   );
 }
 
