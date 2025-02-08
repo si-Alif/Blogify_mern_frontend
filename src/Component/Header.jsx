@@ -4,8 +4,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { Logo, Button } from "../utils/utilsIndex";
 import ThemeToggleSwitch from "./ThemeToggler";
 import { logout } from "../ReduxStore/auth";
+import { useNavigate } from "react-router-dom";
 
 function Header() {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const state = useSelector((state) => state.auth.isAuthenticated);
 
@@ -44,6 +46,7 @@ function Header() {
 
   const handleLogout = () => {
     dispatch(logout());
+    navigate("/login");
   };
 
   return (
@@ -79,7 +82,7 @@ function Header() {
         )}
       </ul>
 
-     
+
       <div className="flex items-center gap-4">
         {state && (
           <Button

@@ -2,11 +2,13 @@ import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'reac
 import databaseService from '../Appwrite/DB';
 const PreviewCard = React.lazy(() => import('./PreviewCard'));
 import { useSelector } from 'react-redux';
+import axios from 'axios';
 
 // Custom hook for fetching and caching posts
 function usePosts() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState({})
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -22,6 +24,7 @@ function usePosts() {
       setLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     const cachedPosts = JSON.parse(localStorage.getItem('posts'));

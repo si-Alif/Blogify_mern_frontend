@@ -24,13 +24,16 @@ function Login() {
     setLoading(true);
     setErrorMessage(""); // Reset error message on new submission
     try {
-      const loginResponse = await authService.login(data, navigate);
+      const loginResponse = await authService.login(data);
 
-      if (loginResponse?.session && loginResponse?.userInfo) {
-        dispatch(
+
+
+      if (loginResponse) {
+         dispatch(
           login({
-            session: loginResponse.session,
-            userInfo: loginResponse.userInfo,
+            // session: loginResponse.session,
+            userInfo: loginResponse,
+            isAuthenticated:true
           })
         );
       } else {
@@ -43,6 +46,7 @@ function Login() {
       ); // Display error message
     } finally {
       setLoading(false);
+      navigate("/")
     }
   };
 

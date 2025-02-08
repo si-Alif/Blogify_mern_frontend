@@ -11,12 +11,12 @@ function SignUp() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { 
-    register, 
-    handleSubmit, 
-    control, 
-    setError, 
-    formState: { errors } 
+  const {
+    register,
+    handleSubmit,
+    control,
+    setError,
+    formState: { errors }
   } = useForm();
 
   const [formError, setFormError] = useState("");
@@ -25,18 +25,16 @@ function SignUp() {
     try {
       setFormError(""); // Clear previous errors
 
-      const avatar = await storageService.uploadProfilePicture(data.PP);
-      if (avatar) {
-        data.PP = avatar.$id;
-
         const loginSession = await authService.signup(data, navigate, dispatch);
-        if (loginSession.error) {
-          throw new Error(loginSession.error.message);
+        if (!loginSession) {
+          throw new Error(
+            "Failed to create user. Please check your input and try again."
+          );
         }
 
-       
-        dispatch(login({ userInfo: loginSession.userInfo , session: loginSession.session}));
-      }
+        dispatch(login({ userInfo: loginSession}));
+        navigate("/");
+
     } catch (err) {
       if (err.message.includes("email")) {
         setError("email", { type: "manual", message: "Please enter a valid email address." });
@@ -163,7 +161,7 @@ function SignUp() {
             Upload Profile Picture
           </label>
           <Controller
-            name="PP"
+            name="avatar"
             control={control}
             render={({ field }) => (
               <UploadFileBtn

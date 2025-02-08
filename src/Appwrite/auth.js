@@ -2,6 +2,7 @@ import { Client, Account, ID  } from "appwrite";
 import conf from "./config.js";
 import { login as authLogin, logout } from "../ReduxStore/auth.js";
 import { Users } from "node-appwrite";
+import axios from "axios";
 
 class AuthService {
   client = new Client();
@@ -13,74 +14,73 @@ class AuthService {
     this.account = new Account(this.client);
   }
 
-  // Sign-up function
-  async signup({ email, password, fullName, PP ,username }, navigate, dispatch) {
+  async signup({ email, password, fullName, avatar, username }) {
     try {
-      const userInfo = await this.account.create(ID.unique(), email, password ,username );
-     
+
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("fullName", fullName);
+      formData.append("username", username);
+      if (avatar) {
+        formData.append("avatar", avatar);
+      }
+
+      const userInfo = await axios.post(
+        "https://localhost:8000/api/v1/user/register",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
+
       if (userInfo) {
-        const session = await this.login({ email, password }, navigate);
+        console.log(userInfo);
 
-        await this.updateUserPrefs(fullName, PP);
+        const userData = await this.login({ email, password });
 
-        // return session;
-      }else{
-        return userInfo
+        if (userData) return userData
+
       }
     } catch (error) {
       console.error(
         `Failed to sign up user with email ${email}: ${error.message}`
       );
-      return error
+      return error;
     }
   }
 
-  async updateUserPrefs(fullName, PP) {
-    try {
-      await this.account.updatePrefs({
-        fullName: fullName,
-        profilePicture: PP,
-        status: 'active'
-        
-      });
-      console.log("User preferences updated successfully.");
-    } catch (error) {
-      console.error(`Failed to update user preferences: ${error.message}`);
-    }
-  }
 
-  
+  async login({ email, password }) {
 
-  async login({ email, password }, navigate) {
     try {
-      // Delete all sessions before logging in
-      await this.deleteAllSessions();
-    } catch (error) {
-      throw new Error(`Failed to check or delete sessions: ${error.message}`);
-    }
-  
-    try {
-      // Create a new session
-      const newSession = await this.account.createEmailPasswordSession(
-        email,
-        password
-      );
-      console.log("Logged in:", newSession);
-  
-      // Fetch current user data
-      const userData = await this.getCurrUserData();
-  
-      if (userData) {
-        navigate("/");
-        // Return both session and userInfo
-        return { session: newSession, userInfo: userData };
-      }
+
+      console.log(email);
+
+
+      const loggedIn = await axios.post("https://localhost:8000/api/v1/user/login", { email, password }, { withCredentials: true });
+
+
+      if(loggedIn) console.log(loggedIn.data.data?.user);
+
+      return loggedIn.data?.data.user
+
     } catch (error) {
       console.error(`Failed to log in user: ${error.message}`);
      return error
     }
   }
-  
+
+  async logout(navigate) {
+    try {
+     await axios.post("https://localhost:8000/api/v1/user/logout" , {} , {withCredentials: true})
+
+
+    } catch (error) {
+      throw new Error(`Failed to log out user: ${error.message}`);
+    }
+  }
 
   async createEmailVerification() {
     try {
@@ -92,66 +92,10 @@ class AuthService {
     }
   }
 
-  // async createCreatorAccount() {
-  //   try {
-  //     const urlParams = new URLSearchParams(window.location.search);
-  //     const secret = urlParams.get("secret");
-  //     const userId = urlParams.get("userId");
-
-  //     if (secret && userId) {
-  //       const verification = await this.account.updateVerification(
-  //         userId,
-  //         secret
-  //       );
-
-  //       if (verification) {
-  //         console.log("User verified successfully");
-
-  //         const userData = await this.getCurrUserData();
-  //         if (userData && !userData.labels.includes("creator")) {
-  //           await this.account.updateLabels(userId, ["creator"]);
-  //           console.log("User marked as creator");
-  //         } else if (!userData) {
-  //           await this.login(
-  //             { email: userData.email, password: userData.password },
-  //             navigate
-  //           );
-  //         }
-  //       }
-
-  //       return verification;
-  //     } else {
-  //       throw new Error("Missing userId or secret in URL parameters.");
-  //     }
-  //   } catch (error) {
-  //     throw new Error(
-  //       `Failed to process creator account verification: ${error.message}`
-  //     );
-  //   }
-  // }
-
- 
-  
-  // Usage example
- 
-  async deleteAllSessions() {
-    try {
-
-      const sessions= await this.account.listSessions()
-      if(sessions.total > 0) {
-        await this.account.deleteSessions();
-        console.log("Deleted existing sessions.");
-      }
-
-     
-    } catch (error) {
-      console.error(`Failed to check or delete sessions: ${error.message}`);
-    }
-  }
 
   async getCurrUserData() {
     try {
-      const session = await this.account.get();
+      const session = await axios.get("https://localhost:8000/api/v1/user/current-user")
       return session;
     } catch (error) {
       if (error.code === 404) {
@@ -160,6 +104,29 @@ class AuthService {
       throw new Error(`Failed to get current session: ${error.message}`);
     }
   }
+
+  async updateUserPrefs(newPrefs) {
+    try {
+
+      const user = await this.account.get();
+      const currentPrefs = user.prefs || {};
+
+
+      const updatedPrefs = {
+        ...currentPrefs,
+        ...newPrefs
+      };
+
+
+      await this.account.updatePrefs(updatedPrefs);
+
+      console.log("User preferences updated successfully.");
+    } catch (error) {
+      console.error(`Failed to update user preferences: ${error.message}`);
+    }
+  }
+
+
 
   async createPasswordRecovery({ email }) {
     try {
@@ -200,18 +167,6 @@ class AuthService {
     }
   }
 
-  async logout(dispatch, navigate) {
-    try {
-      const empty =  await this.deleteAllSessions();
-      if(empty){
-        dispatch(logout());
-        navigate("/login");
-
-      }
-    } catch (error) {
-      throw new Error(`Failed to log out user: ${error.message}`);
-    }
-  }
 }
 
 const authService = new AuthService();
