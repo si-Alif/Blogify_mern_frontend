@@ -27,7 +27,7 @@ class AuthService {
       }
 
       const userInfo = await axios.post(
-        "https://localhost:8000/api/v1/user/register",
+        "http://localhost:8000/api/v1/user/register",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -59,7 +59,7 @@ class AuthService {
       console.log(email);
 
 
-      const loggedIn = await axios.post("https://localhost:8000/api/v1/user/login", { email, password }, { withCredentials: true });
+      const loggedIn = await axios.post("http://localhost:8000/api/v1/user/login", { email, password }, { withCredentials: true });
 
 
       if(loggedIn) console.log(loggedIn.data.data?.user);
@@ -68,13 +68,13 @@ class AuthService {
 
     } catch (error) {
       console.error(`Failed to log in user: ${error.message}`);
-     return error
+     return null
     }
   }
 
-  async logout(navigate) {
+  async logout() {
     try {
-     await axios.post("https://localhost:8000/api/v1/user/logout" , {} , {withCredentials: true})
+     await axios.post("http://localhost:8000/api/v1/user/logout" , {} , {withCredentials: true})
 
 
     } catch (error) {
@@ -95,7 +95,9 @@ class AuthService {
 
   async getCurrUserData() {
     try {
-      const session = await axios.get("https://localhost:8000/api/v1/user/current-user")
+      const session = await axios.get("http://localhost:8000/api/v1/user/current-user", {
+        withCredentials: true, 
+      });
       return session;
     } catch (error) {
       if (error.code === 404) {
@@ -107,24 +109,21 @@ class AuthService {
 
   async updateUserPrefs(newPrefs) {
     try {
+      const session = await axios.put("http://localhost:8000/api/v1/user/update-info",
+        newPrefs,
+        {
+          withCredentials: true,
+          headers: {
+             "Content-Type": "multipart/form-data" },
 
-      const user = await this.account.get();
-      const currentPrefs = user.prefs || {};
+        });
 
-
-      const updatedPrefs = {
-        ...currentPrefs,
-        ...newPrefs
-      };
-
-
-      await this.account.updatePrefs(updatedPrefs);
-
+      console.log(session);
       console.log("User preferences updated successfully.");
     } catch (error) {
       console.error(`Failed to update user preferences: ${error.message}`);
     }
-  }
+}
 
 
 

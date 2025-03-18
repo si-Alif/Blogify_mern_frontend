@@ -31,11 +31,11 @@ function Login() {
       if (loginResponse) {
          dispatch(
           login({
-            // session: loginResponse.session,
             userInfo: loginResponse,
             isAuthenticated:true
           })
-        );
+        )
+        navigate("/")
       } else {
         setErrorMessage("Invalid Email or Password. Please try again."); // Set error message
       }
@@ -44,9 +44,6 @@ function Login() {
       setErrorMessage(
         error.message || "An unexpected error occurred. Please try again."
       ); // Display error message
-    } finally {
-      setLoading(false);
-      navigate("/")
     }
   };
 

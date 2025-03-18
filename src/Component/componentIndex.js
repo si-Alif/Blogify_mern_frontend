@@ -6,13 +6,13 @@ import SignUp from "./SignUp.jsx"
 import Login from "./Login.jsx"
 import Home from "./Home.jsx"
 import Post from "./Post.jsx"
-import Account from "./Account.jsx"
+import Account from "./Account/Account.jsx"
 // import VerifyPage from "./Verify.jsx"
 import Creator from "./Creator.jsx"
 import CreatorProfile from "./CreatorProfile.jsx"
 
 export {
-  
+
   PostForm,
   ThemeToggleSwitch,
   Header,
@@ -24,5 +24,5 @@ export {
   Account,
   Creator,
   CreatorProfile
-  
+
 }

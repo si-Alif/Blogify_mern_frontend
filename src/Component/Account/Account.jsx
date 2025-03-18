@@ -1,94 +1,83 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { debounce, isEqual } from "lodash";
-import storageService from "../Appwrite/Storage";
-import ServerSDK from "../Appwrite/ServerSDK";
 import { useSelector } from "react-redux";
-import authService from "../Appwrite/auth";
+
+import authService from "../../Appwrite/auth";
+
 
 function Account({ userId, isAuthenticated }) {
+
   const ownerAccount = useSelector((state) => state.auth.userInfo);
+  const [error, setError] = useState(null);
 
-  console.log(ownerAccount)
+  const [addedLinks, setAddedLinks] = useState([]);
+  const [data, setData] = useState({});
 
-  const [data, setData] = useState(null);
-  const [img, setImg] = useState("");
   const [links, setLinks] = useState({
-    whatsapp: "",
+    // whatsapp: "",
     facebook: "",
     youtube: "",
     reddit: "",
-    discord: "",
+    // discord: "",
+    twitter:"",
   });
-  const [addedLinks, setAddedLinks] = useState([]);
-  const [error, setError] = useState(null);
 
-  const isOwner = userId === ownerAccount?._id;
-  console.log(isOwner)
-  // Fetch user data with debounce
-  const fetchUserData = useCallback(
-    debounce(async (userId, controller) => {
-      if (!userId) return;
-      if (!isOwner) {
 
-        try {
-          const info = await ServerSDK.postInteractions(userId);
+  useEffect(()=>{
+    (async()=>{
 
-          if (info) {
-            setData(info);
+      const data = await authService.getCurrUserData()
+      if (data){
+        console.log(data)
+        setData(data.data?.user)
+        setLinks(data?.socialMediaHandles)
 
-            // Update social media links
-            if (info.prefs?.socialMedia) {
-              setLinks((prevLinks) => ({
-                ...prevLinks,
-                ...info.prefs.socialMedia,
-              }));
-            setAddedLinks(Object.entries(info.prefs.socialMedia));
-          }
-
-          // Update profile picture
-          if (info.prefs?.profilePicture) {
-            const previewURL = await storageService.previewPP(
-              info.prefs.profilePicture
-            );
-            setImg(previewURL);
-          }
-        }
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Error fetching user data:", error);
-          setError("Failed to fetch user data. Please try again later.");
-        }
       }
-    }else{
-      setData(ownerAccount);
-      setLinks((prevLinks) => ({
-        ...prevLinks,
-        ...data?.socialMediaHandles,
-      }));
-    setAddedLinks(Object.entries(data?.socialMediaHandles?.url));
-    }
-    }, 50),
-    []
-  );
+    })()
+
+  },[])
 
 
-  // Effect to fetch user data on mount and cleanup
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchUserData(userId, controller);
-    return () => {
-      controller.abort();
-      fetchUserData.cancel();
-    };
-  }, [userId , fetchUserData]);
+
+  const isOwner = data?._id === ownerAccount?._id;
+  console.log(isOwner)
+  // // Fetch user data with debounce
+  // const fetchUserData = useCallback(
+  //   debounce(async (userId, controller) => {
+  //     if (!userId) return;
+  //     if (!isOwner) {
+
+  //       try {
+  //         const info = await ServerSDK.postInteractions(userId);
+
+
+  //     } catch (error) {
+  //       if (error.name !== "AbortError") {
+  //         console.error("Error fetching user data:", error);
+  //         setError("Failed to fetch user data. Please try again later.");
+  //       }
+  //     }
+  //   }else{
+  //     setData(ownerAccount);
+  //     setLinks(ownerAccount?.socialMediaHandles)
+
+  //   }
+  //   }, 50),
+  //   []
+  // );
+
+  // // Effect to fetch user data on mount and cleanup
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   fetchUserData(userId, controller);
+  //   return () => {
+  //     controller.abort();
+  //     fetchUserData.cancel();
+  //   };
+  // }, [userId , fetchUserData]);
 
   const handleAddLink = async (e) => {
     e.preventDefault();
-
-    const updatedLinks = Object.entries(links).reduce((acc, [platform, url]) => {
-      if (url.trim()) acc[platform] = url;
-      return acc;
-    }, {});
 
     // Avoid redundant updates
     if (!isEqual(addedLinks, Object.entries(updatedLinks))) {
@@ -207,7 +196,7 @@ function Account({ userId, isAuthenticated }) {
               ) : null}
 
               {/* Display Added Links */}
-              {addedLinks.length > 0 ? (
+              {links?.length > 0 ? (
                 <div className="mt-6">
 
                   <div className="flex flex-wrap gap-4 mt-4">

@@ -8,7 +8,7 @@ import axios from 'axios';
 function usePosts() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState({})
+
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -82,7 +82,7 @@ function Home() {
   return (
     <main className="w-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center min-h-screen">
       <header className="w-full py-5 bg-blue-600 dark:bg-gray-800 text-white text-center shadow-lg shadow-blue-700">
-        <h1 className="text-2xl font-bold">Welcome to Home</h1>
+        <h1 className="text-2xl font-bold">Welcome !!!</h1>
       </header>
       <div className="w-full flex justify-center py-10">{renderContent}</div>
     </main>
